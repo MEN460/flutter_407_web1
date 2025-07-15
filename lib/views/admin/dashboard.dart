@@ -8,10 +8,7 @@ class AdminDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-final reportAsync = ref.watch(
-      reportServiceProvider,
-      // Fetch the dashboard report
-    ).fetchDashboardReport(); // Adjusted to use the correct method for fetching the report
+    final reportAsync = ref.watch(dashboardReportProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Dashboard')),
@@ -23,13 +20,13 @@ final reportAsync = ref.watch(
           child: Column(
             children: [
               const Text('Booking Analytics', style: TextStyle(fontSize: 18)),
-              ReportChart(data: report.data['bookings']),
+              ReportChart(data: report.data['bookings'] ?? {}),
               const SizedBox(height: 20),
               const Text('Flight Performance', style: TextStyle(fontSize: 18)),
-              ReportChart(data: report.data['flights']),
+              ReportChart(data: report.data['flights'] ?? {}),
               const SizedBox(height: 20),
               const Text('User Activity', style: TextStyle(fontSize: 18)),
-              ReportChart(data: report.data['users']),
+              ReportChart(data: report.data['users'] ?? {}),
             ],
           ),
         ),
@@ -37,3 +34,5 @@ final reportAsync = ref.watch(
     );
   }
 }
+// This file is part of the K-Airways Flutter project.
+// It provides the admin dashboard screen with booking analytics, flight performance, and user activity reports.

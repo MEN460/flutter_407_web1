@@ -10,20 +10,26 @@ class FlightService {
 
   FlightService(this._api, this._logger);
 
-  /// Get all available flights
+  /// ✅ Get all available flights
   Future<List<Flight>> getFlights() async {
     try {
       final response = await _api.get(ApiEndpoints.flights);
-      return (response.data as List)
-          .map((json) => Flight.fromJson(json))
-          .toList();
+      final data = response.data;
+
+      // ✅ Support both raw list and wrapped JSON { "flights": [...] }
+      final flightList = data is List ? data : data['flights'];
+      if (flightList == null) {
+        throw Exception('No flights data found in response');
+      }
+
+      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
     } catch (e, stack) {
       _logger.error('Failed to fetch flights: $e', stack);
       rethrow;
     }
   }
 
-  /// Get the status of a specific flight
+  /// ✅ Get the status of a specific flight
   Future<FlightStatus> getFlightStatus(String flightId) async {
     try {
       _logger.info('Fetching flight status for $flightId', 'FlightService');
@@ -35,7 +41,7 @@ class FlightService {
     }
   }
 
-  /// Update the status of a specific flight
+  /// ✅ Update the status of a specific flight
   Future<void> updateFlightStatus(String flightId, FlightStatus status) async {
     try {
       await _api.post(
@@ -49,33 +55,43 @@ class FlightService {
     }
   }
 
-  /// Search flights with filters (e.g. origin, destination, date)
+  /// ✅ Search flights with filters (e.g. origin, destination, date)
   Future<List<Flight>> searchFlights(Map<String, dynamic> filters) async {
     try {
       final response = await _api.get(ApiEndpoints.flights, params: filters);
-      return (response.data as List)
-          .map((json) => Flight.fromJson(json))
-          .toList();
+      final data = response.data;
+
+      final flightList = data is List ? data : data['flights'];
+      if (flightList == null) {
+        throw Exception('No flights found for filters: $filters');
+      }
+
+      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
     } catch (e, stack) {
       _logger.error('Flight search failed: $e', stack);
       rethrow;
     }
   }
 
-  /// Get flights assigned to an employee (for staff dashboard)
+  /// ✅ Get flights assigned to an employee (for staff dashboard)
   Future<List<Flight>> getAssignedFlights(String employeeId) async {
     try {
       final response = await _api.get(ApiEndpoints.employeeFlights);
-      return (response.data as List)
-          .map((json) => Flight.fromJson(json))
-          .toList();
+      final data = response.data;
+
+      final flightList = data is List ? data : data['flights'];
+      if (flightList == null) {
+        throw Exception('No assigned flights found for employee $employeeId');
+      }
+
+      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
     } catch (e, stack) {
       _logger.error('Failed to fetch assigned flights: $e', stack);
       rethrow;
     }
   }
 
-  /// Create a new flight (admin-only)
+  /// ✅ Create a new flight (admin-only)
   Future<void> createFlight(Flight flight) async {
     try {
       await _api.post(ApiEndpoints.flights, data: flight.toJson());

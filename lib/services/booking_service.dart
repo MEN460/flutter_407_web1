@@ -11,7 +11,7 @@ class BookingService {
   /// Create a new booking
   Future<Booking> createBooking({
     required int flightId,
-    required String seatNumber,
+    required String seatNumber, required String seatClass,
   }) async {
     final response = await _api.post(
       ApiEndpoints.bookings,

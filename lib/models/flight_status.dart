@@ -42,6 +42,48 @@ class FlightStatus {
       'remarks': remarks,
     };
   }
+
+  /// Create a copy with optional overrides
+  FlightStatus copyWith({
+    String? flightId,
+    String? status,
+    DateTime? estimatedDeparture,
+    DateTime? actualDeparture,
+    String? gate,
+    String? remarks,
+  }) {
+    return FlightStatus(
+      flightId: flightId ?? this.flightId,
+      status: status ?? this.status,
+      estimatedDeparture: estimatedDeparture ?? this.estimatedDeparture,
+      actualDeparture: actualDeparture ?? this.actualDeparture,
+      gate: gate ?? this.gate,
+      remarks: remarks ?? this.remarks,
+    );
+  }
+
+  /// Equality operator override
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is FlightStatus &&
+        other.flightId == flightId &&
+        other.status == status &&
+        other.estimatedDeparture == estimatedDeparture &&
+        other.actualDeparture == actualDeparture &&
+        other.gate == gate &&
+        other.remarks == remarks;
+  }
+
+  /// Hash code override
+  @override
+  int get hashCode {
+    return flightId.hashCode ^
+        status.hashCode ^
+        estimatedDeparture.hashCode ^
+        actualDeparture.hashCode ^
+        gate.hashCode ^
+        remarks.hashCode;
+  }
 }
-// This class represents the status of a flight, including its ID, status, estimated and actual departure times, gate information, and any remarks.
-// It includes methods for parsing from JSON and converting to JSON format.

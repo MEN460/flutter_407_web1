@@ -13,18 +13,48 @@ class SystemLogsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('System Logs')),
       body: logsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
-        data: (logs) => ListView.builder(
-          itemCount: logs.length,
-          itemBuilder: (context, index) {
-            final log = logs[index];
-            return ListTile(
-              title: Text(log['action']),
-              subtitle: Text('${log['timestamp']} - ${log['user']}'),
-              trailing: Text(log['status']),
-            );
-          },
+        error: (err, _) => Center(
+          child: Text(
+            'Error loading logs: $err',
+            style: const TextStyle(color: Colors.red),
+          ),
         ),
+        data: (logs) {
+          if (logs.isEmpty) {
+            return const Center(child: Text('No system logs available.'));
+          }
+
+          return ListView.builder(
+            itemCount: logs.length,
+            itemBuilder: (context, index) {
+              final log = logs[index];
+
+              final action = log['action'] ?? 'Unknown Action';
+              final timestamp = log['timestamp'] ?? 'No Timestamp';
+              final user = log['user'] ?? 'Unknown User';
+              final status =
+                  log['status']?.toString().toUpperCase() ?? 'UNKNOWN';
+
+              final isSuccess = status == 'SUCCESS';
+
+              return ListTile(
+                leading: Icon(
+                  isSuccess ? Icons.check_circle : Icons.error,
+                  color: isSuccess ? Colors.green : Colors.red,
+                ),
+                title: Text(action),
+                subtitle: Text('$timestamp - $user'),
+                trailing: Text(
+                  status,
+                  style: TextStyle(
+                    color: isSuccess ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

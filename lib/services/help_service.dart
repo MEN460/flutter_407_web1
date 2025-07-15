@@ -59,8 +59,9 @@ class HelpService {
     try {
       final updates = <String, dynamic>{};
       if (status != null) updates['status'] = status;
-      if (resolutionNotes != null)
+      if (resolutionNotes != null) {
         updates['resolution_notes'] = resolutionNotes;
+      }
 
       await _api.put(
         '${ApiEndpoints.helpTickets}/$ticketId/update',

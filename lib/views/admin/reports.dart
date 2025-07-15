@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_airways_flutter/models/report.dart';
 import 'package:k_airways_flutter/widgets/report_chart.dart';
 import 'package:k_airways_flutter/providers.dart';
+
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
 
@@ -14,6 +15,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   String _selectedReportType = 'BOOKING';
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
+
+  late Future<Report> _reportFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReport();
+  }
+
+  void _loadReport() {
+    final reportService = ref.read(reportServiceProvider);
+    _reportFuture = reportService.generateCustomReport(
+      type: _selectedReportType,
+      startDate: _startDate,
+      endDate: _endDate,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +48,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     (type) => DropdownMenuItem(value: type, child: Text(type)),
                   )
                   .toList(),
-              onChanged: (value) =>
-                  setState(() => _selectedReportType = value!),
+              onChanged: (value) {
+                setState(() {
+                  _selectedReportType = value!;
+                  _loadReport();
+                });
+              },
               decoration: const InputDecoration(labelText: 'Report Type'),
             ),
             const SizedBox(height: 16),
@@ -53,18 +75,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => ref.refresh(reportServiceProvider),
+              onPressed: () {
+                setState(() {
+                  _loadReport();
+                });
+              },
               child: const Text('Generate Report'),
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final reportAsync = ref.watch(reportServiceProvider);
-                  return reportAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Error: $err')),
-                    data: (report) => SingleChildScrollView(
+              child: FutureBuilder<Report>(
+                future: _reportFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    final report = snapshot.data!;
+                    return SingleChildScrollView(
                       child: Column(
                         children: [
                           Text(
@@ -80,8 +109,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                           ),
                         ],
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    return const Center(child: Text('No data found.'));
+                  }
                 },
               ),
             ),
@@ -117,6 +148,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   void _exportReport(Report report) {
-    // Implement PDF export
+    // TODO: Implement PDF export
   }
 }

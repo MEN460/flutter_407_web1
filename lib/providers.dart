@@ -59,16 +59,17 @@ final loggerProvider = Provider((ref) => Logger());
 /// -----------------------
 final authStateProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-      return AuthNotifier(ref.read(authServiceProvider))..loadCurrentUser();
+      return AuthNotifier(ref.read(authServiceProvider));
     });
 
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   final AuthService _authService;
 
-  AuthNotifier(this._authService) : super(const AsyncValue.loading());
+  AuthNotifier(this._authService) : super(const AsyncValue.loading()) {
+    _loadCurrentUserOnStart();
+  }
 
-  Future<void> loadCurrentUser() async {
-    state = const AsyncValue.loading();
+  Future<void> _loadCurrentUserOnStart() async {
     try {
       final user = await _authService.getCurrentUser();
       state = AsyncValue.data(user);
@@ -92,6 +93,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     state = const AsyncValue.data(null);
   }
 }
+
 
 /// -----------------------
 /// 📦 Data Providers

@@ -23,10 +23,10 @@ class BookingConfirmationScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            Text('Flight: ${booking.flight.seatNumber}'),
-            Text('${booking.flight.origin} → ${booking.flight.destination}'),
+            Text('Flight: ${booking.flight?.number}'),
+            Text('${booking.flight?.origin} → ${booking.flight?.destination}'),
             Text(
-              'Seat: ${booking.seatNumber} (${booking.seatNumber.toUpperCase()})',
+              'Seat: ${booking.seatNumber.toUpperCase()}',
             ),
             const SizedBox(height: 32),
             const Text('An email confirmation has been sent to your account'),
@@ -34,13 +34,15 @@ class BookingConfirmationScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () => context.go('/'),
-                  child: const Text('Home'),
+                  icon: const Icon(Icons.home),
+                  label: const Text('Home'),
                 ),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () => context.go('/booking/${booking.id}'),
-                  child: const Text('View Details'),
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('View Details'),
                 ),
               ],
             ),
@@ -50,3 +52,4 @@ class BookingConfirmationScreen extends StatelessWidget {
     );
   }
 }
+            

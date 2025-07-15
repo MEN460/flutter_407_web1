@@ -38,6 +38,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
       await bookingService.submitInquiry(
         bookingId: _bookingIdController.text,
         message: _inquiryController.text,
+        details: 'Inquiry about booking',
       );
 
       if (mounted) {

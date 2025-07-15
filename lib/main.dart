@@ -5,14 +5,12 @@ import 'package:k_airways_flutter/l10n/app_localizations.dart';
 import 'package:k_airways_flutter/app_router.dart';
 import 'package:k_airways_flutter/services/log_service.dart';
 import 'package:k_airways_flutter/utils/theme_provider.dart';
-
+import 'dart:developer' as developer;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Optional: Initialize global logger for debugging
+  developer.log('Starting Kenya Airways App...');
   appLogger.info('App started', 'Main');
-
   runApp(const ProviderScope(child: KenyaAirwaysApp()));
 }
 
@@ -22,6 +20,7 @@ class KenyaAirwaysApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = ref.watch(themeProvider);
+    final router = buildAppRouter(ref);
 
     return MaterialApp.router(
       title: 'Kenya Airways',
@@ -35,7 +34,7 @@ class KenyaAirwaysApp extends ConsumerWidget {
         ),
       ),
       themeMode: theme.themeMode,
-      routerConfig: appRouter,
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         AppLocalizations.delegate,

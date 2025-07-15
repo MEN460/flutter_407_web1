@@ -16,6 +16,49 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   bool _isLoading = false;
 
   @override
+  void dispose() {
+    _bookingIdController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _findBooking() async {
+    setState(() => _isLoading = true);
+    final bookingService = ref.read(bookingServiceProvider);
+    try {
+      final booking = await bookingService.getBooking(
+        _bookingIdController.text.trim(),
+      );
+      setState(() => _booking = booking);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error finding booking: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _checkInPassenger() async {
+    if (_booking == null) return;
+
+    final bookingService = ref.read(bookingServiceProvider);
+    try {
+      await bookingService.checkInPassenger(_booking!.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Passenger checked in successfully')),
+        );
+        setState(() => _booking = null);
+        _bookingIdController.clear();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Check-in failed: $e')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Passenger Check-In')),
@@ -36,49 +79,19 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             if (_isLoading) const LinearProgressIndicator(),
             if (_booking != null) ...[
               const SizedBox(height: 20),
-              Text('Passenger: ${_booking!.user.email}'),
-              Text('Flight: ${_booking!.flight.number}'),
+              Text('Passenger: ${_booking!.user?.email ?? 'N/A'}'),
+              Text('Flight: ${_booking!.flight?.number ?? 'N/A'}'),
               Text('Seat: ${_booking!.seatNumber}'),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _checkInPassenger,
-                child: const Text('Check In Passenger'),
+              ElevatedButton.icon(
+                onPressed: _isLoading ? null : _checkInPassenger,
+                icon: const Icon(Icons.check_circle),
+                label: Text(_isLoading ? 'Checking in...' : 'Check In'),
               ),
             ],
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _findBooking() async {
-    setState(() => _isLoading = true);
-    final bookingService = ref.read(bookingServiceProvider);
-    try {
-      final booking = await bookingService.getBooking(
-        _bookingIdController.text,
-      );
-      setState(() => _booking = booking);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _checkInPassenger() async {
-    if (_booking == null) return;
-
-    final bookingService = ref.read(bookingServiceProvider);
-    await bookingService.checkInPassenger(_booking!.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passenger checked in successfully')),
-      );
-      setState(() => _booking = null);
-      _bookingIdController.clear();
-    }
   }
 }
