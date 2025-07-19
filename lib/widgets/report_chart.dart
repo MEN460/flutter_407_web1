@@ -12,19 +12,32 @@ class ReportChart extends StatelessWidget {
 
     // Handle empty data
     if (chartData.barGroups.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 200,
         child: Center(
-          child: Text(
-            'No data available for chart',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.insert_chart_outlined,
+                color: Colors.grey,
+                size: 48,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No data available',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              ),
+            ],
           ),
         ),
       );
     }
 
     return SizedBox(
-      height: 200,
+      height: MediaQuery.of(context).size.height * 0.3, // 30% of screen height
       child: BarChart(
         BarChartData(
           barGroups: chartData.barGroups,
@@ -33,12 +46,10 @@ class ReportChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 40,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: const TextStyle(fontSize: 10),
-                  );
-                },
+                getTitlesWidget: (value, meta) => Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 10),
+                ),
               ),
             ),
             bottomTitles: AxisTitles(
@@ -47,17 +58,20 @@ class ReportChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
                   if (index >= 0 && index < chartData.labels.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        chartData.labels[index],
-                        style: const TextStyle(fontSize: 10),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                    return Tooltip(
+                      message: chartData.fullLabels[index],
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          chartData.labels[index],
+                          style: const TextStyle(fontSize: 10),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     );
                   }
-                  return const Text('');
+                  return const SizedBox();
                 },
               ),
             ),
@@ -72,7 +86,8 @@ class ReportChart extends StatelessWidget {
           borderData: FlBorderData(show: false),
           alignment: BarChartAlignment.spaceAround,
         ),
-        swapAnimationDuration: const Duration(milliseconds: 300),
+        swapAnimationDuration: const Duration(milliseconds: 400),
+        swapAnimationCurve: Curves.easeInOut,
       ),
     );
   }
@@ -83,11 +98,12 @@ class ReportChart extends StatelessWidget {
         .toList();
 
     if (entries.isEmpty) {
-      return _ChartData([], []);
+      return _ChartData([], [], []);
     }
 
     final barGroups = <BarChartGroupData>[];
     final labels = <String>[];
+    final fullLabels = <String>[]; // Store original labels for tooltips
 
     for (int i = 0; i < entries.length; i++) {
       final entry = entries[i];
@@ -101,21 +117,23 @@ class ReportChart extends StatelessWidget {
               toY: value.toDouble(),
               color: _getColorForIndex(i),
               width: 20,
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(4),
             ),
           ],
         ),
       );
 
-      // Truncate long labels
+      // Save truncated and full labels
       String label = entry.key;
-      if (label.length > 8) {
-        label = '${label.substring(0, 8)}...';
-      }
-      labels.add(label);
+      String truncatedLabel = label.length > 8
+          ? '${label.substring(0, 8)}…'
+          : label;
+
+      labels.add(truncatedLabel);
+      fullLabels.add(label);
     }
 
-    return _ChartData(barGroups, labels);
+    return _ChartData(barGroups, labels, fullLabels);
   }
 
   Color _getColorForIndex(int index) {
@@ -136,6 +154,7 @@ class ReportChart extends StatelessWidget {
 class _ChartData {
   final List<BarChartGroupData> barGroups;
   final List<String> labels;
+  final List<String> fullLabels;
 
-  _ChartData(this.barGroups, this.labels);
+  _ChartData(this.barGroups, this.labels, this.fullLabels);
 }

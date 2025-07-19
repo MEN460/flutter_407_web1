@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/utils/validators.dart';
+import 'package:k_airways_flutter/widgets/password_strength_indicator.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -18,6 +19,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   // Real-time validation states
   bool _emailValid = false;
   bool _passwordValid = false;
@@ -27,7 +31,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    // Add real-time validation listeners
     _emailController.addListener(_validateEmail);
     _passwordController.addListener(_validatePassword);
     _confirmPasswordController.addListener(_validatePasswordMatch);
@@ -36,11 +39,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    _emailController.removeListener(_validateEmail);
-    _passwordController.removeListener(_validatePassword);
-    _confirmPasswordController.removeListener(_validatePasswordMatch);
-    _nameController.removeListener(_validateName);
-
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -60,7 +58,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_passwordValid != isValid) {
       setState(() => _passwordValid = isValid);
     }
-    // Re-validate password match when password changes
     _validatePasswordMatch();
   }
 
@@ -92,7 +89,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     try {
-      // Use the AuthNotifier instead of direct service call
       final success = await ref
           .read(authStateProvider.notifier)
           .register(
@@ -102,11 +98,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
 
       if (success && mounted) {
-        // Don't manually navigate - let the router handle redirection
-        // based on authentication state changes
-        _showSuccessSnackBar(
-          'Registration successful! Welcome to Kenya Airways',
-        );
+        _showSuccessSnackBar('Registration successful! Welcome aboard.');
       }
     } catch (e) {
       if (mounted) {
@@ -137,17 +129,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth state for loading and error handling
-    final authState = ref.watch(authStateProvider);
     final isLoading = ref.watch(isAuthLoadingProvider);
-    final authError = ref.watch(authErrorProvider);
-
-    // Show error if auth fails
-    if (authError != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showErrorSnackBar(authError);
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create Account'), centerTitle: true),
@@ -159,7 +141,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header section
                 const SizedBox(height: 20),
                 const Icon(Icons.person_add, size: 80, color: Colors.blue),
                 const SizedBox(height: 16),
@@ -176,7 +157,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Form fields with real-time validation feedback
+                // Full Name
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -194,6 +175,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // Email
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -209,34 +191,56 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: _passwordValid
-                        ? const Icon(Icons.check_circle, color: Colors.green)
-                        : null,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
                     border: const OutlineInputBorder(),
-                    helperText:
-                        'Minimum 8 characters with uppercase, lowercase, and number',
-                    helperMaxLines: 2,
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   validator: Validators.password,
+                  onChanged: (_) => setState(() {}),
                 ),
+
+                // Password Strength Indicator
+                if (_passwordController.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  PasswordStrengthIndicator(password: _passwordController.text),
+                ],
+
                 const SizedBox(height: 20),
 
+                // Confirm Password
                 TextFormField(
                   controller: _confirmPasswordController,
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: _passwordsMatch
-                        ? const Icon(Icons.check_circle, color: Colors.green)
-                        : _confirmPasswordController.text.isNotEmpty
-                        ? const Icon(Icons.cancel, color: Colors.red)
-                        : null,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(
+                          () => _obscureConfirmPassword =
+                              !_obscureConfirmPassword,
+                        );
+                      },
+                    ),
                     border: const OutlineInputBorder(),
                     errorText:
                         _confirmPasswordController.text.isNotEmpty &&
@@ -244,7 +248,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ? 'Passwords do not match'
                         : null,
                   ),
-                  obscureText: true,
+                  obscureText: _obscureConfirmPassword,
                   validator: (value) {
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
@@ -254,7 +258,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Register button with loading state
+                // Register Button
                 SizedBox(
                   height: 56,
                   child: ElevatedButton.icon(
@@ -284,7 +288,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Login redirect with consistent navigation
+                // Redirect to Login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -299,7 +303,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ],
                 ),
 
-                // Terms and conditions
                 const SizedBox(height: 16),
                 const Text(
                   'By creating an account, you agree to our Terms of Service and Privacy Policy.',

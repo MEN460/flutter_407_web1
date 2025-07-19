@@ -230,13 +230,49 @@ final bookingInquiryProvider = FutureProvider.autoDispose
     });
 
 // 📊 Dashboard Report
-final dashboardReportProvider = FutureProvider.autoDispose<Report>((ref) {
+// 📊 Dashboard Report (Safe & Normalized)
+final dashboardReportProvider = FutureProvider.autoDispose<Report>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) throw Exception('User not authenticated');
-  return ref.read(reportServiceProvider).fetchDashboardReport();
+
+  try {
+    final reportService = ref.read(reportServiceProvider);
+    final rawReport = await reportService.fetchDashboardReport();
+
+    // Normalize and provide fallback/defaults
+    return Report(
+      id: rawReport.id,
+      type: rawReport.type,
+      startDate:
+          rawReport.startDate,
+      endDate: rawReport.endDate,
+      generatedAt: rawReport.generatedAt,
+      data: {
+        'bookings': _normalizeMap(rawReport.data['bookings']),
+        'flights': _normalizeMap(rawReport.data['flights']),
+        'users': _normalizeMap(rawReport.data['users']),
+      },
+    );
+  } catch (e, st) {
+    ref.read(loggerProvider).error('Failed to fetch dashboard report', e, st);
+    throw Exception('Unable to load dashboard report. Please try again.');
+  }
 });
 
-// 👥 All Users (Admin-only)
+Map<String, num> _normalizeMap(dynamic input) {
+  if (input is Map) {
+    return input.map<String, num>((key, value) {
+      if (key is String && value is num && value >= 0) {
+        return MapEntry(key, value);
+      }
+      return const MapEntry('', 0); // Invalid entry placeholder
+    })..removeWhere((k, v) => k.isEmpty); // Remove invalid keys
+  }
+  return <String, num>{};
+}
+
+
+/// 👥 All Users (Admin-only)
 final allUsersProvider = FutureProvider.autoDispose<List<User>>((ref) {
   final user = ref.watch(currentUserProvider);
   if (user?.role != 'admin') {

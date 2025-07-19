@@ -15,11 +15,36 @@ class SeatSelectionScreen extends StatefulWidget {
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   String? _selectedSeat;
 
+  void _onSeatSelected(String? seat) {
+    setState(() {
+      _selectedSeat = seat;
+    });
+  }
+
   void _confirmSelection() {
-    if (_selectedSeat != null) {
+    if (_selectedSeat == null) {
+      // Show error message if no seat selected
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a seat before confirming'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Navigate with proper error handling
+    try {
       context.push(
         '/booking-confirm',
         extra: {'flight': widget.flight, 'seat': _selectedSeat},
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Navigation error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -27,20 +52,73 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Select Seat - ${widget.flight.number}')),
+      appBar: AppBar(
+        title: Text('Select Seat - ${widget.flight.number}'),
+        elevation: 0,
+      ),
       body: Column(
         children: [
+          // Add seat selection info
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Flight: ${widget.flight.number}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _selectedSeat != null
+                      ? 'Selected Seat: $_selectedSeat'
+                      : 'Please select a seat',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _selectedSeat != null
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: _selectedSeat != null
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Seat map
           Expanded(
             child: SeatMap(
               flight: widget.flight,
-              onSeatSelected: (seat) => setState(() => _selectedSeat = seat),
+              onSeatSelected: _onSeatSelected,
             ),
           ),
-          Padding(
+          // Bottom action area
+          Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(16.0),
-            child: FilledButton(
-              onPressed: _selectedSeat != null ? _confirmSelection : null,
-              child: const Text('Confirm Seat'),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: SafeArea(
+              child: FilledButton(
+                onPressed: _selectedSeat != null ? _confirmSelection : null,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: Text(
+                  _selectedSeat != null
+                      ? 'Confirm Seat $_selectedSeat'
+                      : 'Select a Seat First',
+                ),
+              ),
             ),
           ),
         ],

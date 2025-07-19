@@ -217,8 +217,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textInputAction: TextInputAction.done,
                   validator: Validators.password,
                   enabled: !isLoading,
+                  onChanged: (_) => setState(() {}), // Trigger rebuild
                   onFieldSubmitted: (_) => _handleLogin(),
                 ),
+
+                // Password Strength Indicator
+                if (_passwordController.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  PasswordStrengthIndicator(password: _passwordController.text),
+                ],
+
                 const SizedBox(height: 16),
 
                 // Forgot Password Link
@@ -228,7 +236,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: isLoading
                         ? null
                         : () {
-                            // TODO: Implement forgot password
                             _showMessage(
                               'Forgot password feature coming soon',
                               isError: false,
