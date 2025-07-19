@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:k_airways_flutter/app_router.dart';
 import 'package:k_airways_flutter/models/booking.dart';
 import 'package:k_airways_flutter/models/booking_inquiry.dart';
 import 'package:k_airways_flutter/models/flight.dart';
@@ -55,6 +57,13 @@ final logServiceProvider = Provider(
 final loggerProvider = Provider((ref) => Logger());
 
 /// -----------------------
+/// 📱 Router Provider
+/// -----------------------
+final routerProvider = Provider<GoRouter>((ref) {
+  return AppRouter.createRouter(ref);
+});
+
+/// -----------------------
 /// 👤 Auth State Provider
 /// -----------------------
 final authStateProvider =
@@ -72,40 +81,115 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   Future<void> _loadCurrentUserOnStart() async {
     try {
       final user = await _authService.getCurrentUser();
-      state = AsyncValue.data(user);
+      if (mounted) {
+        state = AsyncValue.data(user);
+      }
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (mounted) {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     state = const AsyncValue.loading();
     try {
       final user = await _authService.login(email, password);
-      state = AsyncValue.data(user);
+      if (mounted) {
+        state = AsyncValue.data(user);
+        return true;
+      }
+      return false;
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (mounted) {
+        state = AsyncValue.error(e, st);
+      }
+      rethrow;
+    }
+  }
+
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String fullName,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final success = await _authService.register(
+        email: email,
+        password: password,
+        fullName: fullName,
+      );
+      if (success) {
+        // Auto-login after successful registration
+        final user = await _authService.login(email, password);
+        if (mounted) {
+          state = AsyncValue.data(user);
+          return true;
+        }
+      }
+      return false;
+    } catch (e, st) {
+      if (mounted) {
+        state = AsyncValue.error(e, st);
+      }
+      rethrow;
     }
   }
 
   Future<void> logout() async {
-    await _authService.logout();
-    state = const AsyncValue.data(null);
+    try {
+      await _authService.logout();
+    } catch (e) {
+      // Log error but still clear local state
+      print('Logout error: $e');
+    } finally {
+      if (mounted) {
+        state = const AsyncValue.data(null);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clean up resources if needed
+    super.dispose();
   }
 }
-
 
 /// -----------------------
 /// 📦 Data Providers
 /// -----------------------
 
-// 🚨 Authenticated user snapshot
+// 🚨 Authenticated user snapshot with proper state handling
 final currentUserProvider = Provider<User?>((ref) {
-  return ref.watch(authStateProvider).value;
+  final authState = ref.watch(authStateProvider);
+  return authState.when(
+    data: (user) => user,
+    loading: () => null,
+    error: (_, __) => null,
+  );
 });
 
-// 📃 All Flights
+// Loading state provider for UI components
+final isAuthLoadingProvider = Provider<bool>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.isLoading;
+});
+
+// Auth error provider for error handling
+final authErrorProvider = Provider<String?>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.when(
+    data: (_) => null,
+    loading: () => null,
+    error: (error, _) => error.toString(),
+  );
+});
+
+// 📃 All Flights - Made keepAlive to prevent unnecessary refetches
 final flightListProvider = FutureProvider.autoDispose<List<Flight>>((ref) {
+  ref.keepAlive();
   return ref.read(flightServiceProvider).getFlights();
 });
 
@@ -119,7 +203,7 @@ final filteredFlightsProvider = FutureProvider.autoDispose
 final assignedFlightsProvider = FutureProvider.autoDispose<List<Flight>>((
   ref,
 ) async {
-  final user = ref.watch(authStateProvider).value;
+  final user = ref.watch(currentUserProvider);
   if (user == null) throw Exception('User not authenticated');
   return ref.read(flightServiceProvider).getAssignedFlights(user.id);
 });
@@ -134,7 +218,7 @@ final flightStatusProvider = FutureProvider.autoDispose
 final userBookingsProvider = FutureProvider.autoDispose<List<Booking>>((
   ref,
 ) async {
-  final user = ref.watch(authStateProvider).value;
+  final user = ref.watch(currentUserProvider);
   if (user == null) throw Exception('User not authenticated');
   return ref.read(bookingServiceProvider).getUserBookings();
 });
@@ -147,11 +231,17 @@ final bookingInquiryProvider = FutureProvider.autoDispose
 
 // 📊 Dashboard Report
 final dashboardReportProvider = FutureProvider.autoDispose<Report>((ref) {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) throw Exception('User not authenticated');
   return ref.read(reportServiceProvider).fetchDashboardReport();
 });
 
 // 👥 All Users (Admin-only)
 final allUsersProvider = FutureProvider.autoDispose<List<User>>((ref) {
+  final user = ref.watch(currentUserProvider);
+  if (user?.role != 'admin') {
+    throw Exception('Unauthorized: Admin access required');
+  }
   return ref.read(userServiceProvider).getAllUsers();
 });
 
@@ -159,18 +249,35 @@ final allUsersProvider = FutureProvider.autoDispose<List<User>>((ref) {
 final passengerListProvider = FutureProvider.autoDispose<List<User>>((
   ref,
 ) async {
-  final users = await ref.read(userServiceProvider).searchUsersByRole('passenger');
+  final user = ref.watch(currentUserProvider);
+  if (user?.role != 'admin' && user?.role != 'employee') {
+    throw Exception('Unauthorized: Staff access required');
+  }
+  final users = await ref
+      .read(userServiceProvider)
+      .searchUsersByRole('passenger');
   return users;
 });
 
 // 🔍 User Search
 final userSearchProvider = FutureProvider.autoDispose
     .family<List<User>, String>((ref, query) {
+      final user = ref.watch(currentUserProvider);
+      if (user?.role != 'admin' && user?.role != 'employee') {
+        throw Exception('Unauthorized: Staff access required');
+      }
       return ref.read(userServiceProvider).searchUsers(query);
     });
 
-// 🛠️ System Logs
+// 🛠️ System Logs (Admin-only)
 final systemLogsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+      final user = ref.watch(currentUserProvider);
+      if (user?.role != 'admin') {
+        throw Exception('Unauthorized: Admin access required');
+      }
       return ref.read(logServiceProvider).getSystemLogs();
     });
+
+// Navigation state provider for managing navigation state
+final navigationStateProvider = StateProvider<String?>((ref) => null);
