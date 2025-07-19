@@ -4,10 +4,10 @@ class Flight {
   final String origin;
   final String destination;
   final DateTime departureTime;
-  final DateTime? arrivalTime; // New: Arrival time from API
-  final Map<String, int> capacities; // e.g., {'executive': 20, 'economy': 150}
-  final String? status; // e.g., active, canceled
-  final String? assignedEmployeeId; // For admin-assigned flights
+  final DateTime? arrivalTime;
+  final Map<String, int> capacities;
+  final String? status;
+  final String? assignedEmployeeId;
 
   Flight({
     required this.id,
@@ -25,6 +25,7 @@ class Flight {
   factory Flight.fromJson(Map<String, dynamic> json) {
     return Flight(
       id: json['id'].toString(),
+      // Standardize on 'number' field
       number: json['number'] ?? json['flight_number'] ?? 'N/A',
       origin: json['origin'] ?? 'Unknown',
       destination: json['destination'] ?? 'Unknown',
@@ -33,17 +34,33 @@ class Flight {
       arrivalTime: json['arrival_time'] != null
           ? DateTime.tryParse(json['arrival_time'])
           : null,
-      capacities: Map<String, int>.from(json['capacities'] ?? {}),
-      status: json['status'], // optional
+      // Ensure capacities are valid positive integers
+      capacities: _parseCapacities(json['capacities']),
+      status: json['status'],
       assignedEmployeeId: json['assigned_employee_id']?.toString(),
     );
+  }
+
+  /// Parse and validate capacities
+  static Map<String, int> _parseCapacities(dynamic capacitiesJson) {
+    if (capacitiesJson == null) return {};
+
+    final Map<String, int> result = {};
+    if (capacitiesJson is Map) {
+      capacitiesJson.forEach((key, value) {
+        if (value is num && value >= 0) {
+          result[key.toString()] = value.toInt();
+        }
+      });
+    }
+    return result;
   }
 
   /// Convert Flight to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'number': number,
+      'number': number, // Consistent field name
       'origin': origin,
       'destination': destination,
       'departure_time': departureTime.toIso8601String(),
@@ -53,5 +70,14 @@ class Flight {
       if (assignedEmployeeId != null)
         'assigned_employee_id': assignedEmployeeId,
     };
+  }
+
+  /// Validate flight data
+  bool get isValid {
+    return number.isNotEmpty &&
+        origin.isNotEmpty &&
+        destination.isNotEmpty &&
+        capacities.isNotEmpty &&
+        capacities.values.every((capacity) => capacity >= 0);
   }
 }

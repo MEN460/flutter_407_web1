@@ -10,6 +10,19 @@ class ReportChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final chartData = _prepareData();
 
+    // Handle empty data
+    if (chartData.barGroups.isEmpty) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text(
+            'No data available for chart',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 200,
       child: BarChart(
@@ -21,7 +34,10 @@ class ReportChart extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 40,
                 getTitlesWidget: (value, meta) {
-                  return Text(value.toInt().toString());
+                  return Text(
+                    value.toInt().toString(),
+                    style: const TextStyle(fontSize: 10),
+                  );
                 },
               ),
             ),
@@ -37,12 +53,19 @@ class ReportChart extends StatelessWidget {
                         chartData.labels[index],
                         style: const TextStyle(fontSize: 10),
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     );
                   }
                   return const Text('');
                 },
               ),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
             ),
           ),
           gridData: const FlGridData(show: false),
@@ -55,7 +78,13 @@ class ReportChart extends StatelessWidget {
   }
 
   _ChartData _prepareData() {
-    final entries = data.entries.where((e) => e.value is num).toList();
+    final entries = data.entries
+        .where((e) => e.value is num && (e.value as num) >= 0)
+        .toList();
+
+    if (entries.isEmpty) {
+      return _ChartData([], []);
+    }
 
     final barGroups = <BarChartGroupData>[];
     final labels = <String>[];
@@ -72,24 +101,33 @@ class ReportChart extends StatelessWidget {
               toY: value.toDouble(),
               color: _getColorForIndex(i),
               width: 20,
+              borderRadius: BorderRadius.circular(2),
             ),
           ],
         ),
       );
 
-      labels.add(entry.key);
+      // Truncate long labels
+      String label = entry.key;
+      if (label.length > 8) {
+        label = '${label.substring(0, 8)}...';
+      }
+      labels.add(label);
     }
 
     return _ChartData(barGroups, labels);
   }
 
   Color _getColorForIndex(int index) {
-    final colors = [
+    const colors = [
       Colors.blueAccent,
       Colors.greenAccent,
       Colors.orangeAccent,
       Colors.purpleAccent,
       Colors.redAccent,
+      Colors.tealAccent,
+      Colors.amberAccent,
+      Colors.deepPurpleAccent,
     ];
     return colors[index % colors.length];
   }

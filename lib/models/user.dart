@@ -1,8 +1,8 @@
 class User {
   final String id;
   final String email;
-  final String role; // 'admin', 'employee', 'passenger'
-  final bool isActive; // matches Flask's is_active
+  final String role;
+  final bool isActive;
   final DateTime? createdAt;
 
   User({
@@ -17,8 +17,9 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'].toString(),
-      email: json['email'],
-      role: json['role'],
+      email: json['email'] ?? '',
+      // Normalize role to lowercase for consistency
+      role: (json['role'] ?? 'passenger').toString().toLowerCase(),
       isActive: json['is_active'] ?? true,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'])
@@ -33,13 +34,18 @@ class User {
       'email': email,
       'role': role,
       'is_active': isActive,
-      'created_at': createdAt?.toIso8601String(),
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     };
   }
 
-  /// Helpers for role-based checks
-  bool get isAdmin => role.toLowerCase() == 'admin';
-  bool get isEmployee => role.toLowerCase() == 'employee';
-  bool get isPassenger => role.toLowerCase() == 'passenger';
-  bool get isStaff => ['admin', 'employee'].contains(role.toLowerCase());
+  /// Helpers for role-based checks (now safe with normalized roles)
+  bool get isAdmin => role == 'admin';
+  bool get isEmployee => role == 'employee';
+  bool get isPassenger => role == 'passenger';
+  bool get isStaff => ['admin', 'employee'].contains(role);
+
+  /// Get display name for role
+  String get roleDisplayName {
+    return role[0].toUpperCase() + role.substring(1);
+  }
 }
