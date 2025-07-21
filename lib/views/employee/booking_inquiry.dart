@@ -5,7 +5,7 @@ import 'package:k_airways_flutter/providers.dart'
     show bookingServiceProvider, currentUserProvider;
 
 class BookingInquiryScreen extends ConsumerStatefulWidget {
-  const BookingInquiryScreen({super.key});
+  const BookingInquiryScreen({super.key, String? initialBookingId});
 
   @override
   ConsumerState<BookingInquiryScreen> createState() =>

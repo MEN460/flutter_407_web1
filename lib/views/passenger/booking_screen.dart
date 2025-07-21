@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_airways_flutter/l10n/app_localizations.dart';
+import 'package:k_airways_flutter/models/flight.dart';
 import 'package:k_airways_flutter/models/inquiry_type.dart';
 import 'package:k_airways_flutter/providers.dart';
 
 class BookingInquiryScreen extends ConsumerStatefulWidget {
-  const BookingInquiryScreen({super.key});
+  const BookingInquiryScreen({super.key, String? initialBookingId, required Flight flight});
 
   @override
   ConsumerState<BookingInquiryScreen> createState() =>

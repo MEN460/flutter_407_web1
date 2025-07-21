@@ -6,7 +6,7 @@ import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/widgets/flight_card.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
-  const FlightSearchScreen({super.key});
+  const FlightSearchScreen({super.key, Map<String, dynamic>? initialSearchParams});
 
   @override
   ConsumerState<FlightSearchScreen> createState() => _FlightSearchScreenState();

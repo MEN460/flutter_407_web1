@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 class FlightStatusScreen extends ConsumerWidget {
   final String flightId;
 
-  const FlightStatusScreen({super.key, required this.flightId});
+  const FlightStatusScreen({super.key, required this.flightId, required String flightNumber});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
