@@ -183,6 +183,60 @@ class AppRouter {
           return SeatSelectionScreen(flight: flight);
         },
       ),
+      GoRoute(
+        path: '/flight-search',
+        name: 'passenger-flight-search',
+        builder: (context, state) => const FlightSearchScreen(),
+      ),
+      GoRoute(
+        path: '/booking_screen',
+        name: 'passenger-booking',
+        builder: (context, state) {
+          final flight = state.extra as Flight?;
+          if (flight == null) {
+            return const ErrorFallbackScreen(
+              errorMessage: 'Flight data is required for booking',
+            );
+          }
+          return BookingScreen(flight: flight);
+        },
+      ),
+      GoRoute(
+        path: '/booking-confirm',
+        name: 'passenger-booking-confirm',
+        builder: (context, state) {
+          // Assuming booking confirmation needs booking data
+          final bookingData = state.extra as Map<String, dynamic>?;
+          if (bookingData == null) {
+            return const ErrorFallbackScreen(
+              errorMessage: 'Booking data is required for confirmation',
+            );
+          }
+          return BookingConfirmScreen(bookingData: bookingData);
+        },
+      ),
+      GoRoute(
+        path: '/booking-history',
+        name: 'passenger-booking-history',
+        builder: (context, state) => const BookingHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/feedback',
+        name: 'passenger-feedback',
+        builder: (context, state) => const FeedbackScreen(),
+      ),
+
+      // 🔗 Shared Routes (accessible by all authenticated users)
+      GoRoute(
+        path: '/help-center',
+        name: 'help-center',
+        builder: (context, state) => const HelpCenterScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       
 
       // 🚫 Unauthorized access route
