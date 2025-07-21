@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:k_airways_flutter/models/flight.dart';
 import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/widgets/flight_card.dart';
-import 'package:intl/intl.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
   const FlightSearchScreen({super.key});
@@ -55,14 +56,12 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
     }
   }
 
-  Future<void> _searchFlights() async {
+Future<void> _searchFlights() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_selectedDate == null) {
       _showErrorSnackBar('Please select a departure date');
       return;
     }
-
     if (_selectedClass == null) {
       _showErrorSnackBar('Please select a class');
       return;
@@ -70,25 +69,28 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
 
     setState(() => _isSearching = true);
 
-    try {
-      // Create search parameters
-      final searchParams = FlightSearchParams(
-        origin: _originController.text.trim(),
-        destination: _destController.text.trim(),
-        departureDate: _selectedDate!,
-        flightClass: _selectedClass!.toLowerCase(),
-      );
-
-      // Update the search parameters in the provider
-      await ref
+  try {
+    // Use the FlightSearchParams from providers.dart
+   ref
           .read(flightSearchParamsProvider.notifier)
-          .updateSearchParams(searchParams);
+          .update(
+            FlightSearchParams(
+              departure: _originController.text.trim(),
+              arrival: _destController.text.trim(),
+              departureDate: _selectedDate!,
+              returnDate: null, // Add this if you need round trips later
+              passengers: 1, // Default value
+              flightClass: _selectedClass!.toLowerCase(),
+            ),
+          );
 
-      // Refresh the flights provider with new search parameters
-      ref.refresh(filteredFlightsProvider as Refreshable);
+     final currentParams = ref.read(flightSearchParamsProvider);
+
+      ref.invalidate(filteredFlightsProvider);
+      ref.read(filteredFlightsProvider(currentParams.toMap()));
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Search failed. Please try again.');
+        _showErrorSnackBar('Search failed: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -165,8 +167,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                             },
                           ),
                         ),
-
-                        // Swap Button
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: IconButton(
@@ -180,7 +180,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                             ),
                           ),
                         ),
-
                         Expanded(
                           child: TextFormField(
                             controller: _destController,
@@ -208,9 +207,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 16),
-
                     // Date and Class Selection
                     Row(
                       children: [
@@ -238,9 +235,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(width: 12),
-
                         // Class Dropdown
                         Expanded(
                           flex: 2,
@@ -269,9 +264,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
                     // Search Button
                     SizedBox(
                       width: double.infinity,
@@ -305,14 +298,15 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 8),
-
             // Flight Results
             Expanded(
               child: Consumer(
                 builder: (context, ref, child) {
-                  final flightsAsync = ref.watch(filteredFlightsProvider as ProviderListenable);
+                  final searchParams = ref.watch(flightSearchParamsProvider);
+                  final flightsAsync = ref.watch(
+                    filteredFlightsProvider(searchParams.toMap()),
+                  );
 
                   return flightsAsync.when(
                     loading: () => const Center(
@@ -349,15 +343,16 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () =>
-                                ref.refresh(filteredFlightsProvider as Refreshable<void>),
+                            onPressed: () => ref.refresh(
+                              filteredFlightsProvider(searchParams.toMap()),
+                            ),
                             icon: const Icon(Icons.refresh),
                             label: const Text('Try Again'),
                           ),
                         ],
                       ),
                     ),
-                    data: (flights) {
+                    data: (List<Flight> flights) {
                       if (flights.isEmpty) {
                         return Center(
                           child: Column(
@@ -389,7 +384,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Results Header
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16.0,
@@ -401,8 +395,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                                   ?.copyWith(fontWeight: FontWeight.w500),
                             ),
                           ),
-
-                          // Flight List
                           Expanded(
                             child: ListView.builder(
                               padding: const EdgeInsets.symmetric(
@@ -429,35 +421,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
   }
 }
 
-// Data class for search parameters (add this to your models)
-class FlightSearchParams {
-  final String origin;
-  final String destination;
-  final DateTime departureDate;
-  final String flightClass;
 
-  const FlightSearchParams({
-    required this.origin,
-    required this.destination,
-    required this.departureDate,
-    required this.flightClass,
-  });
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is FlightSearchParams &&
-        other.origin == origin &&
-        other.destination == destination &&
-        other.departureDate == departureDate &&
-        other.flightClass == flightClass;
-  }
 
-  @override
-  int get hashCode {
-    return origin.hashCode ^
-        destination.hashCode ^
-        departureDate.hashCode ^
-        flightClass.hashCode;
-  }
-}
+

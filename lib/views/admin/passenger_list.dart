@@ -16,7 +16,7 @@ class PassengerListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(passengerListProvider),
+            onPressed: () => ref.invalidate(passengerListProvider),
             tooltip: 'Refresh',
           ),
         ],
@@ -50,7 +50,7 @@ class PassengerListScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => ref.refresh(passengerListProvider),
+                onPressed: () => ref.invalidate(passengerListProvider),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -82,7 +82,8 @@ class PassengerListScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              ref.refresh(passengerListProvider);
+              ref.invalidate(passengerListProvider);
+              await ref.read(passengerListProvider.future);
             },
             child: ListView.builder(
               itemCount: passengers.length,
@@ -121,14 +122,13 @@ class PassengerListScreen extends ConsumerWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        if (passenger.id != null)
-                          Text(
-                            'ID: ${passenger.id}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                        Text(
+                          'ID: ${passenger.id}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
                           ),
+                        ),
                       ],
                     ),
                     trailing: PopupMenuButton<String>(

@@ -10,12 +10,13 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final flightsAsync = ref.watch(flightListProvider);
-    final userAsync = ref.watch(currentUserProvider);
+    
+    final userAsync = ref.watch(authStateProvider);
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.refresh(flightListProvider);
+          ref.invalidate(flightListProvider);
           await Future.delayed(const Duration(milliseconds: 500));
         },
         child: CustomScrollView(
@@ -249,7 +250,7 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           FloatingActionButton.small(
             heroTag: "refresh",
-            onPressed: () => ref.refresh(flightListProvider),
+            onPressed: () => ref.invalidate(flightListProvider),
             backgroundColor: Colors.grey[100],
             foregroundColor: Colors.grey[700],
             child: const Icon(Icons.refresh, size: 20),

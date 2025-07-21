@@ -62,7 +62,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16.0),
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -82,7 +82,6 @@ class _DashboardSection extends StatelessWidget {
   final Widget child;
 
   const _DashboardSection({
-    super.key,
     required this.title,
     required this.child,
   });

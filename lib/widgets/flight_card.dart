@@ -21,7 +21,6 @@ class FlightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
@@ -48,7 +47,7 @@ class FlightCard extends StatelessWidget {
               _buildFlightTiming(theme),
               const SizedBox(height: 16),
               _buildCapacityInfo(theme),
-              if (showPricing && flight.basePrice != null) ...[
+              if (showPricing) ...[
                 const SizedBox(height: 16),
                 _buildPricingInfo(theme),
               ],
@@ -79,36 +78,36 @@ class FlightCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      flight.number ?? 'Unknown Flight',
+                      flight.number,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.primaryColor,
                       ),
                     ),
                   ),
-                  if (flight.airline != null) ...[
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        flight.airline!,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                  ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      flight.airline,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
+                  ),
+                ],
                 ],
               ),
-              if (flight.aircraft != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  flight.aircraft!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
+              ...[
+              const SizedBox(height: 4),
+              Text(
+                flight.aircraft,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
-              ],
+              ),
+            ],
             ],
           ),
         ),
@@ -145,7 +144,7 @@ class FlightCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                flight.origin ?? 'Unknown',
+                flight.origin,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -191,7 +190,7 @@ class FlightCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                flight.destination ?? 'Unknown',
+                flight.destination,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -208,7 +207,7 @@ class FlightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -227,7 +226,7 @@ class FlightCard extends StatelessWidget {
               flight.arrivalTime!,
               Icons.flight_land,
             ),
-          if (flight.duration != null) _buildDurationInfo(theme),
+          _buildDurationInfo(theme),
         ],
       ),
     );
@@ -292,7 +291,7 @@ class FlightCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          _formatDuration(flight.duration!),
+          _formatDuration(flight.duration),
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -302,7 +301,7 @@ class FlightCard extends StatelessWidget {
   }
 
   Widget _buildCapacityInfo(ThemeData theme) {
-    final capacities = flight.capacities ?? {};
+    final capacities = flight.capacities;
 
     if (capacities.isEmpty) {
       return Container(
@@ -357,7 +356,7 @@ class FlightCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: isUnavailable
-            ? theme.colorScheme.surfaceVariant.withOpacity(0.5)
+            ? theme.colorScheme.surfaceContainerHighest.withOpacity(0.5)
             : color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
@@ -434,7 +433,7 @@ class FlightCard extends StatelessWidget {
                 ),
               ),
               Text(
-                _formatPrice(flight.basePrice!),
+                _formatPrice(flight.basePrice),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.primaryColor,

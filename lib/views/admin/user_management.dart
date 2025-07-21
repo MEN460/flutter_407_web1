@@ -155,6 +155,8 @@ class UserManagementScreen extends ConsumerWidget {
   }
 
   void _showAddUserDialog(BuildContext context, WidgetRef ref) {
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -173,6 +175,8 @@ class UserManagementScreen extends ConsumerWidget {
   }
 
   void _showEditUserDialog(BuildContext context, WidgetRef ref, User user) {
+    if (!context.mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Edit User for ${user.email} not implemented.')),
     );
@@ -202,7 +206,7 @@ class UserManagementScreen extends ConsumerWidget {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && context.mounted) {
       await _deleteUser(ref, user.id, context);
     }
   }
@@ -215,11 +219,16 @@ class UserManagementScreen extends ConsumerWidget {
     try {
       final userService = ref.read(userServiceProvider);
       await userService.deleteUser(userId);
+
+      if (!context.mounted) return;
+
       ref.invalidate(allUsersProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User deleted successfully.')),
       );
     } catch (e) {
+      if (!context.mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to delete user: $e')));

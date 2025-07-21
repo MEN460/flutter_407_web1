@@ -312,7 +312,7 @@ class SettingsScreen extends ConsumerWidget {
             itemCount: availableLanguages.length,
             itemBuilder: (context, index) {
               final language = availableLanguages[index];
-              final isSelected = language == currentLanguage;
+            
 
               return RadioListTile<Language>(
                 title: Text(language.nativeName),

@@ -18,7 +18,7 @@ static void logInfo(String message) {
 
   }
 
-   void error(String message, [StackTrace? stack]) {
+   void error(String message, Object error, [StackTrace? stack]) {
     debugPrint('[ERROR] $message\n${stack ?? StackTrace.current}');
   }
 

@@ -8,6 +8,12 @@ class Flight {
   final Map<String, int> capacities;
   final String? status;
   final String? assignedEmployeeId;
+    final String flightNumber; // ADD THIS
+  final String airline; // ADD THIS
+  final String aircraft; // ADD THIS
+  final double basePrice; // ADD THIS
+  final Duration duration; // ADD THIS
+
 
   Flight({
     required this.id,
@@ -19,6 +25,11 @@ class Flight {
     required this.capacities,
     this.status,
     this.assignedEmployeeId,
+    required this.flightNumber,
+    required this.airline,
+    required this.aircraft,
+    required this.basePrice,
+    required this.duration,
   });
 
   /// Create Flight from JSON
@@ -38,6 +49,12 @@ class Flight {
       capacities: _parseCapacities(json['capacities']),
       status: json['status'],
       assignedEmployeeId: json['assigned_employee_id']?.toString(),
+      flightNumber: json['flight_number']?.toString() ?? 'N/A',
+      airline: json['airline']?.toString() ?? 'Unknown',
+      aircraft: json['aircraft']?.toString() ?? 'Unknown',
+      basePrice: (json['base_price'] as num?)?.toDouble() ?? 0.0,
+      duration: Duration(minutes: (json['duration'] as num?)?.toInt() ?? 0),
+     
     );
   }
 
@@ -69,6 +86,11 @@ class Flight {
       if (status != null) 'status': status,
       if (assignedEmployeeId != null)
         'assigned_employee_id': assignedEmployeeId,
+      'flight_number': flightNumber,
+      'airline': airline,
+      'aircraft': aircraft,
+      'base_price': basePrice,
+      'duration': duration.inMinutes, // Store duration in minutes
     };
   }
 
@@ -79,5 +101,6 @@ class Flight {
         destination.isNotEmpty &&
         capacities.isNotEmpty &&
         capacities.values.every((capacity) => capacity >= 0);
+      
   }
 }

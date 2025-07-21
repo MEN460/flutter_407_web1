@@ -106,7 +106,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                 context,
                 icon: Icons.flight,
                 label: 'Flight Number',
-                value: flight.number ?? 'N/A',
+                value: flight.number ,
               ),
               const SizedBox(height: 12),
               _buildDetailRow(
@@ -114,16 +114,15 @@ class BookingConfirmationScreen extends StatelessWidget {
                 icon: Icons.flight_takeoff,
                 label: 'Route',
                 value:
-                    '${flight.origin ?? 'N/A'} → ${flight.destination ?? 'N/A'}',
+                    '${flight.origin} → ${flight.destination}',
               ),
               const SizedBox(height: 12),
-              if (flight.departureTime != null)
-                _buildDetailRow(
-                  context,
-                  icon: Icons.schedule,
-                  label: 'Departure',
-                  value: _formatDateTime(flight.departureTime!),
-                ),
+              _buildDetailRow(
+                context,
+                icon: Icons.schedule,
+                label: 'Departure',
+                value: _formatDateTime(flight.departureTime),
+              ),
             ] else
               Text(
                 'Flight details not available',
@@ -181,7 +180,7 @@ class BookingConfirmationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

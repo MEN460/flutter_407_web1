@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/l10n/app_localizations.dart';
 
-enum InquiryType { general, refund, modification, baggage, checkin, complaint }
+
+import 'package:k_airways_flutter/models/inquiry_type.dart';
 
 class BookingInquiryScreen extends ConsumerStatefulWidget {
   const BookingInquiryScreen({super.key});
+
+  
 
   @override
   ConsumerState<BookingInquiryScreen> createState() =>
@@ -23,10 +26,10 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
   bool _isSubmitting = false;
   String? _submissionError;
   InquiryType _selectedInquiryType = InquiryType.general;
+  InquiryPriority _selectedPriority = InquiryPriority.medium;
 
   @override
   void dispose() {
-    _formKey.currentState?.dispose();
     _scrollController.dispose();
     _bookingIdController.dispose();
     _inquiryController.dispose();
@@ -36,7 +39,6 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
 
   Future<void> _submitInquiry() async {
     if (!_formKey.currentState!.validate()) {
-      // Scroll to first error field
       _scrollToError();
       return;
     }
@@ -49,12 +51,16 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     try {
       final bookingService = ref.read(bookingServiceProvider);
       await bookingService.submitInquiry(
-        bookingId: _bookingIdController.text.trim(),
+        bookingId: _bookingIdController.text.trim().isEmpty
+            ? null
+            : _bookingIdController.text.trim(),
         message: _inquiryController.text.trim(),
-        email: _emailController.text.trim(),
+        email: _emailController.text.trim().isEmpty
+            ? null
+            : _emailController.text.trim(),
         inquiryType: _selectedInquiryType,
-        details:
-            'Inquiry about booking - ${_getInquiryTypeLabel(_selectedInquiryType)}',
+        priority: _selectedPriority,
+        details: 'Inquiry about ${_selectedInquiryType.displayName}',
       );
 
       if (mounted) {
@@ -83,6 +89,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     _emailController.clear();
     setState(() {
       _selectedInquiryType = InquiryType.general;
+      _selectedPriority = InquiryPriority.medium;
       _submissionError = null;
     });
   }
@@ -114,14 +121,21 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     final errorStr = error.toString().toLowerCase();
     final loc = AppLocalizations.of(context)!;
 
-    if (errorStr.contains('network') || errorStr.contains('internet')) {
+    if (errorStr.contains('network') || errorStr.contains('connection')) {
       return loc.networkError;
     } else if (errorStr.contains('timeout')) {
       return loc.timeoutError;
-    } else if (errorStr.contains('404')) {
+    } else if (errorStr.contains('booking not found') ||
+        errorStr.contains('404')) {
       return loc.bookingNotFoundError;
-    } else if (errorStr.contains('401') || errorStr.contains('403')) {
+    } else if (errorStr.contains('unauthorized') || errorStr.contains('401')) {
       return loc.authenticationError;
+    } else if (errorStr.contains('forbidden') || errorStr.contains('403')) {
+      return loc.authenticationError;
+    } else if (errorStr.contains('invalid email')) {
+      return loc.emailInvalidFormat;
+    } else if (errorStr.contains('invalid booking id')) {
+      return loc.bookingIdInvalidFormat;
     } else {
       return loc.generalError;
     }
@@ -129,19 +143,77 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
 
   String _getInquiryTypeLabel(InquiryType type) {
     final loc = AppLocalizations.of(context)!;
+
+    // Use the centralized display name from the enum, but fallback to localized strings
     switch (type) {
       case InquiryType.general:
         return loc.inquiryTypeGeneral;
+      case InquiryType.cancellation:
+        return loc.inquiryTypeCancellation;
       case InquiryType.refund:
         return loc.inquiryTypeRefund;
       case InquiryType.modification:
         return loc.inquiryTypeModification;
+      case InquiryType.seatChange:
+        return loc.inquiryTypeSeatChange;
       case InquiryType.baggage:
         return loc.inquiryTypeBaggage;
       case InquiryType.checkin:
         return loc.inquiryTypeCheckin;
+      case InquiryType.flightChange:
+        return loc.inquiryTypeFlightChange;
+      case InquiryType.specialAssistance:
+        return loc.inquiryTypeSpecialAssistance;
       case InquiryType.complaint:
         return loc.inquiryTypeComplaint;
+      case InquiryType.feedback:
+        return loc.inquiryTypeFeedback;
+      case InquiryType.other:
+        return loc.inquiryTypeOther;
+    }
+  }
+
+  String _getPriorityLabel(InquiryPriority priority) {
+    final loc = AppLocalizations.of(context)!;
+
+    switch (priority) {
+      case InquiryPriority.low:
+        return loc.priorityLow;
+      case InquiryPriority.medium:
+        return loc.priorityMedium;
+      case InquiryPriority.high:
+        return loc.priorityHigh;
+      case InquiryPriority.urgent:
+        return loc.priorityUrgent;
+    }
+  }
+
+  IconData _getInquiryTypeIcon(InquiryType type) {
+    switch (type) {
+      case InquiryType.general:
+        return Icons.help_outline;
+      case InquiryType.cancellation:
+        return Icons.cancel_outlined;
+      case InquiryType.refund:
+        return Icons.money_off;
+      case InquiryType.modification:
+        return Icons.edit_outlined;
+      case InquiryType.seatChange:
+        return Icons.airline_seat_recline_normal;
+      case InquiryType.baggage:
+        return Icons.luggage;
+      case InquiryType.checkin:
+        return Icons.check_circle_outline;
+      case InquiryType.flightChange:
+        return Icons.flight_takeoff;
+      case InquiryType.specialAssistance:
+        return Icons.accessible;
+      case InquiryType.complaint:
+        return Icons.report_outlined;
+      case InquiryType.feedback:
+        return Icons.feedback_outlined;
+      case InquiryType.other:
+        return Icons.more_horiz;
     }
   }
 
@@ -152,14 +224,18 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.helpCenter), centerTitle: true),
+      appBar: AppBar(
+        title: Text(loc.helpCenter),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header Section
               Card(
@@ -181,7 +257,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                           Expanded(
                             child: Text(
                               loc.bookingInquiryTitle,
-                              style: theme.textTheme.titleLarge?.copyWith(
+                              style: theme.textTheme.headlineSmall?.copyWith(
                                 color: colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -207,27 +283,35 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
               Text(
                 loc.inquiryTypeLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               DropdownButtonFormField<InquiryType>(
                 value: _selectedInquiryType,
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.category),
+                  prefixIcon: Icon(_getInquiryTypeIcon(_selectedInquiryType)),
                   border: const OutlineInputBorder(),
                   hintText: loc.selectInquiryType,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                 ),
                 items: InquiryType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(_getInquiryTypeLabel(type)),
+                    child: Row(
+                      children: [
+                        Icon(_getInquiryTypeIcon(type), size: 20),
+                        const SizedBox(width: 8),
+                        Text(_getInquiryTypeLabel(type)),
+                      ],
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _selectedInquiryType = value!;
-                  });
+                  if (value != null) {
+                    setState(() => _selectedInquiryType = value);
+                  }
                 },
                 validator: (value) {
                   if (value == null) {
@@ -239,11 +323,43 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
 
               const SizedBox(height: 20),
 
-              // Booking ID Field
+              // Priority Selection
               Text(
-                loc.bookingIdLabel,
+                loc.priorityLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<InquiryPriority>(
+                value: _selectedPriority,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.priority_high),
+                  border: const OutlineInputBorder(),
+                  hintText: loc.selectPriority,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
+                ),
+                items: InquiryPriority.values.map((priority) {
+                  return DropdownMenuItem(
+                    value: priority,
+                    child: Text(_getPriorityLabel(priority)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedPriority = value);
+                  }
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // Booking ID Field (Optional)
+              Text(
+                '${loc.bookingIdLabel} (${loc.optionalField})',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -255,39 +371,39 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   prefixIcon: const Icon(Icons.confirmation_number),
                   border: const OutlineInputBorder(),
                   helperText: loc.bookingIdHelper,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.bookingIdRequired;
-                  }
-                  if (value.trim().length < 6) {
-                    return loc.bookingIdTooShort;
-                  }
-                  // Add format validation if needed
-                  final bookingIdRegex = RegExp(r'^[A-Z0-9]{6,}$');
-                  if (!bookingIdRegex.hasMatch(value.trim().toUpperCase())) {
-                    return loc.bookingIdInvalidFormat;
+                  if (value != null && value.trim().isNotEmpty) {
+                    final bookingService = ref.read(bookingServiceProvider);
+                    if (!bookingService.isValidBookingId(value.trim())) {
+                      return loc.bookingIdInvalidFormat;
+                    }
                   }
                   return null;
                 },
                 onChanged: (value) {
-                  // Auto-format to uppercase
-                  final text = value.toUpperCase();
-                  _bookingIdController.value = _bookingIdController.value
-                      .copyWith(
-                        text: text,
-                        selection: TextSelection.collapsed(offset: text.length),
-                      );
+                  if (value.isNotEmpty) {
+                    final text = value.toUpperCase();
+                    _bookingIdController.value = _bookingIdController.value
+                        .copyWith(
+                          text: text,
+                          selection: TextSelection.collapsed(
+                            offset: text.length,
+                          ),
+                        );
+                  }
                 },
               ),
 
               const SizedBox(height: 20),
 
-              // Email Field
+              // Email Field (Optional)
               Text(
-                loc.emailLabel,
+                '${loc.emailLabel} (${loc.optionalField})',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -296,19 +412,18 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: loc.emailHint,
-                  prefixIcon: const Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email_outlined),
                   border: const OutlineInputBorder(),
                   helperText: loc.emailHelper,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.emailRequired;
-                  }
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-                  if (!emailRegex.hasMatch(value.trim())) {
-                    return loc.emailInvalidFormat;
+                  if (value != null && value.trim().isNotEmpty) {
+                    final bookingService = ref.read(bookingServiceProvider);
+                    if (!bookingService.isValidEmail(value.trim())) {
+                      return loc.emailInvalidFormat;
+                    }
                   }
                   return null;
                 },
@@ -320,7 +435,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
               Text(
                 loc.inquiryDetails,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -330,6 +445,9 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   hintText: loc.inquiryHint,
                   border: const OutlineInputBorder(),
                   helperText: loc.inquiryHelper,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest,
+                  alignLabelWithHint: true,
                 ),
                 maxLines: 6,
                 maxLength: 1000,
@@ -353,13 +471,17 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
                     color: colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colorScheme.error.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.error_outline,
                         color: colorScheme.onErrorContainer,
+                        size: 24,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -387,7 +509,10 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.send),
                   label: Text(
@@ -395,7 +520,10 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   ),
                   style: FilledButton.styleFrom(
                     textStyle: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -405,6 +533,8 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
 
               // Contact Alternatives
               Card(
+                elevation: 0,
+                color: theme.colorScheme.surfaceContainerLow,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -412,7 +542,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                     children: [
                       Text(
                         loc.alternativeContactTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -422,16 +552,16 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                         title: loc.phoneSupport,
                         subtitle: loc.phoneSupportNumber,
                         onTap: () {
-                          // Implement phone call functionality
+                          // TODO: Implement phone call functionality
                         },
                       ),
-                      const Divider(),
+                      const Divider(height: 24),
                       _buildContactOption(
                         icon: Icons.email,
                         title: loc.emailSupport,
                         subtitle: loc.emailSupportAddress,
                         onTap: () {
-                          // Implement email functionality
+                          // TODO: Implement email functionality
                         },
                       ),
                     ],
@@ -443,16 +573,28 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
 
               // FAQ Section
               Card(
+                elevation: 0,
+                color: theme.colorScheme.surfaceContainerLow,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        loc.faqSectionTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.quiz_outlined,
+                            color: colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            loc.faqSectionTitle,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       _buildFAQItem(loc.faqQuestion1, loc.faqAnswer1),
@@ -480,23 +622,24 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: theme.colorScheme.onPrimaryContainer,
+                color: colorScheme.onPrimaryContainer,
                 size: 24,
               ),
             ),
@@ -508,22 +651,23 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   Text(
                     title,
                     style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios,
+              Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -538,7 +682,8 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
       data: theme.copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: 16.0),
+        childrenPadding: const EdgeInsets.only(bottom: 16.0, left: 4.0),
+        shape: const Border(),
         title: Text(
           question,
           style: theme.textTheme.titleSmall?.copyWith(
@@ -546,10 +691,14 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
           ),
         ),
         children: [
-          Text(
-            answer,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              answer,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
             ),
           ),
         ],

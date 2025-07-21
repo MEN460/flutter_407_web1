@@ -32,6 +32,7 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
               _filterType != BookingFilterType.all
                   ? Icons.filter_alt
                   : Icons.filter_alt_outlined,
+              color: theme.colorScheme.onPrimary,
             ),
             tooltip: 'Filter bookings',
           ),
@@ -231,9 +232,9 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       if (_searchQuery.isNotEmpty) {
         final searchLower = _searchQuery.toLowerCase();
         final matchesId =
-            booking.id?.toLowerCase().contains(searchLower) ?? false;
+            booking.id.toLowerCase().contains(searchLower);
         final matchesFlightNumber =
-            booking.flight?.number?.toLowerCase().contains(searchLower) ??
+            booking.flight?.number.toLowerCase().contains(searchLower) ??
             false;
         final matchesRoute =
             '${booking.flight?.origin} ${booking.flight?.destination}'
@@ -248,12 +249,12 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
       // Status filter
       switch (_filterType) {
         case BookingFilterType.active:
-          return booking.status == BookingStatus.confirmed ||
-              booking.status == BookingStatus.checkedIn;
+          return booking.status == 'confirmed' ||
+              booking.status == 'checkedIn';
         case BookingFilterType.completed:
-          return booking.status == BookingStatus.completed;
+          return booking.status == 'completed';
         case BookingFilterType.cancelled:
-          return booking.status == BookingStatus.cancelled;
+          return booking.status == 'cancelled';
         case BookingFilterType.all:
           return true;
       }
@@ -261,8 +262,8 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
 
     // Sort by booking date (most recent first)
     filtered.sort((a, b) {
-      final aDate = a.bookingDate ?? DateTime.now();
-      final bDate = b.bookingDate ?? DateTime.now();
+      final aDate = a.bookingDate;
+      final bDate = b.bookingDate;
       return bDate.compareTo(aDate);
     });
 

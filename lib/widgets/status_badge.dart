@@ -42,7 +42,6 @@ class StatusBadgeStyle {
   final bool showBorder;
   final bool showIcon;
 
-
   const StatusBadgeStyle({
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     this.borderRadius = 12.0,
@@ -317,17 +316,17 @@ class StatusBadgeExample extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                StatusBadge.pill(
+                StatusBadge(
                   status: 'COMPLETED',
-                  style: const StatusBadgeStyle.pill().copyWith(showIcon: true),
+                  style: StatusBadgeStyle.pill.copyWith(showIcon: true),
                 ),
-                StatusBadge.pill(
+                StatusBadge(
                   status: 'DELAYED',
-                  style: const StatusBadgeStyle.pill().copyWith(showIcon: true),
+                  style: StatusBadgeStyle.pill.copyWith(showIcon: true),
                 ),
-                StatusBadge.pill(
+                StatusBadge(
                   status: 'CANCELLED',
-                  style: const StatusBadgeStyle.pill().copyWith(showIcon: true),
+                  style: StatusBadgeStyle.pill.copyWith(showIcon: true),
                 ),
               ],
             ),
@@ -365,7 +364,7 @@ class StatusBadgeExample extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             StatusBadgeGroup(
-              statuses: ['ON_TIME', 'DELAYED', 'CANCELLED'],
+              statuses: const ['ON_TIME', 'DELAYED', 'CANCELLED'],
               colorMapper: (statusType) {
                 // Custom monochrome color scheme
                 switch (statusType) {
@@ -406,5 +405,12 @@ extension StatusBadgeStyleExtensions on StatusBadgeStyle {
       showBorder: showBorder ?? this.showBorder,
       showIcon: showIcon ?? this.showIcon,
     );
+  }
+}
+
+// Add this extension
+extension ColorExtensions on Color {
+  Color withValues({double? alpha}) {
+    return withOpacity(alpha ?? opacity);
   }
 }

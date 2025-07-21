@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "@@last_modified": "2025-06-21",
+  "@@last_modified": "2025-07-20",
   "appName": "Kenya Airways",
   "@appName": {
     "description": "The name of the application"
@@ -41,249 +41,25 @@
   "@emailLabel": {
     "description": "Label for email input"
   },
+  "emailHint": "Enter your email address",
+  "@emailHint": {
+    "description": "Hint text for email input field"
+  },
+  "emailHelper": "We'll use this to send booking confirmations",
+  "@emailHelper": {
+    "description": "Helper text for email input field"
+  },
+  "emailRequired": "Email address is required",
+  "@emailRequired": {
+    "description": "Validation message for required email"
+  },
+  "emailInvalidFormat": "Please enter a valid email address",
+  "@emailInvalidFormat": {
+    "description": "Validation message for invalid email format"
+  },
   "passwordLabel": "Password",
   "@passwordLabel": {
     "description": "Label for password input"
-  },
-  "flightResults": "Available Flights",
-  "@flightResults": {
-    "description": "Title for available flights"
-  },
-  "duration": "Duration",
-  "@duration": {
-    "description": "Label for flight duration"
-  },
-  "flightNumber": "Flight No",
-  "@flightNumber": {
-    "description": "Label for flight number"
-  },
-  "directFlight": "Direct",
-  "@directFlight": {
-    "description": "Label for direct flights"
-  },
-  "myBookings": "My Bookings",
-  "@myBookings": {
-    "description": "Title for my bookings section"
-  },
-  "bookingDetails": "Booking Details",
-  "@bookingDetails": {
-    "description": "Title for booking details section"
-  },
-  "flightInfo": "Flight Information",
-  "@flightInfo": {
-    "description": "Title for flight information section"
-  },
-  "passengerInfo": "Passenger Information",
-  "@passengerInfo": {
-    "description": "Title for passenger information section"
-  },
-  "passengerTitle": "Title",
-  "@passengerTitle": {
-    "description": "Label for passenger title"
-  },
-  "mr": "Mr",
-  "@mr": {
-    "description": "Title Mr"
-  },
-  "mrs": "Mrs",
-  "@mrs": {
-    "description": "Title Mrs"
-  },
-  "ms": "Ms",
-  "@ms": {
-    "description": "Title Ms"
-  },
-  "paymentTitle": "Complete Payment",
-  "@paymentTitle": {
-    "description": "Title for payment section"
-  },
-  "cardNumber": "Card Number",
-  "@cardNumber": {
-    "description": "Label for card number"
-  },
-  "cardHolder": "Cardholder Name",
-  "@cardHolder": {
-    "description": "Label for cardholder name"
-  },
-  "expiryDate": "Expiry Date",
-  "@expiryDate": {
-    "description": "Label for card expiry date"
-  },
-  "paymentSuccess": "Payment Successful!",
-  "@paymentSuccess": {
-    "description": "Message when payment is successful"
-  },
-  "confirmationSent": "Confirmation sent to {email}",
-  "@confirmationSent": {
-    "description": "Payment confirmation message",
-    "placeholders": {
-      "email": {
-        "type": "String",
-        "example": "user@example.com"
-      }
-    }
-  },
-  "paymentError": "Payment failed. Please check your details and try again.",
-  "@paymentError": {
-    "description": "Message when payment fails"
-  },
-  "paymentGateway": "Payment Gateway",
-  "@paymentGateway": {
-    "description": "Label for payment gateway"
-  },
-  "passportNumber": "Passport Number",
-  "@passportNumber": {
-    "description": "Label for passport number"
-  },
-  "specialAssistance": "Require special assistance?",
-  "@specialAssistance": {
-    "description": "Label for special assistance"
-  },
-  "mealPreference": "Meal Preference",
-  "@mealPreference": {
-    "description": "Label for meal preference"
-  },
-  "savePassenger": "Save Information",
-  "@savePassenger": {
-    "description": "Button text to save passenger information"
-  },
-  "cancelConfirm": "Are you sure you want to cancel this booking?",
-  "@cancelConfirm": {
-    "description": "Confirmation message for cancelling booking"
-  },
-  "cancelSuccess": "Booking successfully cancelled",
-  "@cancelSuccess": {
-    "description": "Message when booking is cancelled"
-  },
-  "capacityWarning": "Capacity: {current}/{max}",
-  "@capacityWarning": {
-    "description": "Capacity warning for employees",
-    "placeholders": {
-      "current": {
-        "type": "int",
-        "example": "120"
-      },
-      "max": {
-        "type": "int",
-        "example": "150"
-      }
-    }
-  },
-  "downloadTicket": "Download E-Ticket",
-  "@downloadTicket": {
-    "description": "Button text to download e-ticket"
-  },
-  "helpCenter": "Help Center",
-  "@helpCenter": {
-    "description": "Title for help center"
-  },
-  "faq": "Frequently Asked Questions",
-  "@faq": {
-    "description": "Title for FAQ section"
-  },
-  "contactSupport": "Contact Support",
-  "@contactSupport": {
-    "description": "Title for contact support"
-  },
-  "feedbackTitle": "Share Your Feedback",
-  "@feedbackTitle": {
-    "description": "Title for feedback section"
-  },
-  "feedbackPrompt": "How was your experience?",
-  "@feedbackPrompt": {
-    "description": "Prompt for feedback"
-  },
-  "cancel": "Cancel",
-  "@cancel": {
-    "description": "Button to cancel"
-  },
-  "back": "Back",
-  "@back": {
-    "description": "Button to go back"
-  },
-  "next": "Next",
-  "@next": {
-    "description": "Button to go to next step"
-  },
-  "statusOnTime": "On Time",
-  "@statusOnTime": {
-    "description": "Status label for on time"
-  },
-  "statusConfirmed": "Confirmed",
-  "@statusConfirmed": {
-    "description": "Status label for confirmed"
-  },
-  "statusPending": "Pending",
-  "@statusPending": {
-    "description": "Status label for pending"
-  },
-  "priceFrom": "From {price}",
-  "@priceFrom": {
-    "description": "Shows the starting price for a flight",
-    "placeholders": {
-      "price": {
-        "type": "String",
-        "example": "KES 12,500"
-      }
-    }
-  },
-  "seatsAvailable": "{count} seats left",
-  "@seatsAvailable": {
-    "description": "Seat availability indicator",
-    "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "5"
-      }
-    }
-  },
-  "sessionExpired": "Session expired. Please log in again",
-  "@sessionExpired": {
-    "description": "Message when session expires"
-  },
-  "thankYouFeedback": "Thank you for your feedback!",
-  "@thankYouFeedback": {
-    "description": "Message after feedback is submitted"
-  },
-  "ticketSubject": "Subject",
-  "@ticketSubject": {
-    "description": "Label for ticket subject"
-  },
-  "ticketMessage": "Message",
-  "@ticketMessage": {
-    "description": "Label for ticket message"
-  },
-  "submitButton": "Submit",
-  "@submitButton": {
-    "description": "Button to submit form"
-  },
-  "rescheduleConfirm": "Are you sure you want to change your flight?",
-  "@rescheduleConfirm": {
-    "description": "Confirmation message for changing flight"
-  },
-  "rescheduleSuccess": "Flight successfully changed",
-  "@rescheduleSuccess": {
-    "description": "Message when flight is changed"
-  },
-  "noFlightsFound": "No flights match your criteria",
-  "@noFlightsFound": {
-    "description": "Message when no flights match criteria"
-  },
-  "flightDetails": "Flight Details",
-  "@flightDetails": {
-    "description": "Title for flight details section"
-  },
-  "flightDetailsSubtitle": "Review your flight details before booking",
-  "@flightDetailsSubtitle": {
-    "description": "Subtitle for flight details section"
-  },
-  "flightDetailsDescription": "Please review the flight details below before proceeding to booking.",
-  "@flightDetailsDescription": {
-    "description": "Description for flight details section"
-  },
-  "forgotPassword": "Forgot Password?",
-  "@forgotPassword": {
-    "description": "Forgot password link text"
   },
   "loginButton": "Sign In",
   "@loginButton": {
@@ -300,6 +76,22 @@
   "guestOption": "Continue as Guest",
   "@guestOption": {
     "description": "Option to continue as guest"
+  },
+  "forgotPassword": "Forgot Password?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+  "invalidEmail": "Please enter a valid email address",
+  "@invalidEmail": {
+    "description": "Validation message for email"
+  },
+  "passwordMismatch": "Passwords do not match",
+  "@passwordMismatch": {
+    "description": "Validation message for password mismatch"
+  },
+  "flightSearch": "Flight Search",
+  "@flightSearch": {
+    "description": "Title for flight search section"
   },
   "destinationLabel": "To",
   "@destinationLabel": {
@@ -345,6 +137,54 @@
   "@searchButton": {
     "description": "Search flights button text"
   },
+  "noFlightsFound": "No flights match your criteria",
+  "@noFlightsFound": {
+    "description": "Message when no flights match criteria"
+  },
+  "priceFrom": "From {price}",
+  "@priceFrom": {
+    "description": "Shows the starting price for a flight",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "KES 12,500"
+      }
+    }
+  },
+  "seatsAvailable": "{count} seats left",
+  "@seatsAvailable": {
+    "description": "Seat availability indicator",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "flightDetails": "Flight Details",
+  "@flightDetails": {
+    "description": "Title for flight details section"
+  },
+  "flightDetailsSubtitle": "Review your flight details before booking",
+  "@flightDetailsSubtitle": {
+    "description": "Subtitle for flight details section"
+  },
+  "flightDetailsDescription": "Please review the flight details below before proceeding to booking.",
+  "@flightDetailsDescription": {
+    "description": "Description for flight details section"
+  },
+  "flightNumber": "Flight No",
+  "@flightNumber": {
+    "description": "Label for flight number"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Label for flight duration"
+  },
+  "directFlight": "Direct",
+  "@directFlight": {
+    "description": "Label for direct flights"
+  },
   "connectingFlight": "Connecting",
   "@connectingFlight": {
     "description": "Label for connecting flights"
@@ -353,9 +193,17 @@
   "@selectFlight": {
     "description": "Button to select flight"
   },
-  "cancellationPolicy": "Cancellation Policy",
-  "@cancellationPolicy": {
-    "description": "Title for cancellation policy"
+  "flightResults": "Available Flights",
+  "@flightResults": {
+    "description": "Title for available flights"
+  },
+  "myBookings": "My Bookings",
+  "@myBookings": {
+    "description": "Title for my bookings section"
+  },
+  "bookingDetails": "Booking Details",
+  "@bookingDetails": {
+    "description": "Title for booking details section"
   },
   "cancelBooking": "Cancel Booking",
   "@cancelBooking": {
@@ -364,6 +212,50 @@
   "rescheduleBooking": "Change Flight",
   "@rescheduleBooking": {
     "description": "Button to reschedule booking"
+  },
+  "cancellationPolicy": "Cancellation Policy",
+  "@cancellationPolicy": {
+    "description": "Title for cancellation policy"
+  },
+  "cancelConfirm": "Are you sure you want to cancel this booking?",
+  "@cancelConfirm": {
+    "description": "Confirmation message for cancelling booking"
+  },
+  "cancelSuccess": "Booking successfully cancelled",
+  "@cancelSuccess": {
+    "description": "Message when booking is cancelled"
+  },
+  "rescheduleConfirm": "Are you sure you want to change your flight?",
+  "@rescheduleConfirm": {
+    "description": "Confirmation message for changing flight"
+  },
+  "rescheduleSuccess": "Flight successfully changed",
+  "@rescheduleSuccess": {
+    "description": "Message when flight is changed"
+  },
+  "downloadTicket": "Download E-Ticket",
+  "@downloadTicket": {
+    "description": "Button text to download e-ticket"
+  },
+  "passengerInfo": "Passenger Information",
+  "@passengerInfo": {
+    "description": "Title for passenger information section"
+  },
+  "passengerTitle": "Title",
+  "@passengerTitle": {
+    "description": "Label for passenger title"
+  },
+  "mr": "Mr",
+  "@mr": {
+    "description": "Title Mr"
+  },
+  "mrs": "Mrs",
+  "@mrs": {
+    "description": "Title Mrs"
+  },
+  "ms": "Ms",
+  "@ms": {
+    "description": "Title Ms"
   },
   "firstName": "First Name",
   "@firstName": {
@@ -377,6 +269,38 @@
   "@phoneNumber": {
     "description": "Label for phone number"
   },
+  "passportNumber": "Passport Number",
+  "@passportNumber": {
+    "description": "Label for passport number"
+  },
+  "specialAssistance": "Require special assistance?",
+  "@specialAssistance": {
+    "description": "Label for special assistance"
+  },
+  "mealPreference": "Meal Preference",
+  "@mealPreference": {
+    "description": "Label for meal preference"
+  },
+  "savePassenger": "Save Information",
+  "@savePassenger": {
+    "description": "Button text to save passenger information"
+  },
+  "paymentTitle": "Complete Payment",
+  "@paymentTitle": {
+    "description": "Title for payment section"
+  },
+  "cardNumber": "Card Number",
+  "@cardNumber": {
+    "description": "Label for card number"
+  },
+  "cardHolder": "Cardholder Name",
+  "@cardHolder": {
+    "description": "Label for cardholder name"
+  },
+  "expiryDate": "Expiry Date",
+  "@expiryDate": {
+    "description": "Label for card expiry date"
+  },
   "cvv": "CVV",
   "@cvv": {
     "description": "Label for CVV code"
@@ -384,6 +308,148 @@
   "payNow": "Pay Now",
   "@payNow": {
     "description": "Button to complete payment"
+  },
+  "paymentSuccess": "Payment Successful!",
+  "@paymentSuccess": {
+    "description": "Message when payment is successful"
+  },
+  "confirmationSent": "Confirmation sent to {email}",
+  "@confirmationSent": {
+    "description": "Payment confirmation message",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "user@example.com"
+      }
+    }
+  },
+  "paymentError": "Payment failed. Please check your details and try again.",
+  "@paymentError": {
+    "description": "Message when payment fails"
+  },
+  "paymentGateway": "Payment Gateway",
+  "@paymentGateway": {
+    "description": "Label for payment gateway"
+  },
+  "paymentProcessing": "Processing your payment...",
+  "@paymentProcessing": {
+    "description": "Message displayed while processing payment"
+  },
+  "statusOnTime": "On Time",
+  "@statusOnTime": {
+    "description": "Status label for on time"
+  },
+  "statusConfirmed": "Confirmed",
+  "@statusConfirmed": {
+    "description": "Status label for confirmed"
+  },
+  "statusPending": "Pending",
+  "@statusPending": {
+    "description": "Status label for pending"
+  },
+  "statusCancelled": "Cancelled",
+  "@statusCancelled": {
+    "description": "Status label for cancelled"
+  },
+  "statusCompleted": "Completed",
+  "@statusCompleted": {
+    "description": "Status label for completed"
+  },
+  "statusDelayed": "Delayed",
+  "@statusDelayed": {
+    "description": "Status label for delayed"
+  },
+  "statusBoarding": "Boarding",
+  "@statusBoarding": {
+    "description": "Status label for boarding"
+  },
+  "statusDeparted": "Departed",
+  "@statusDeparted": {
+    "description": "Status label for departed"
+  },
+  "onTime": "On Time",
+  "@onTime": {
+    "description": "Status label for on time"
+  },
+  "delay": "Delay",
+  "@delay": {
+    "description": "Status label for delay"
+  },
+  "cancellation": "Cancellation",
+  "@cancellation": {
+    "description": "Status label for cancellation"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Button to cancel"
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Button to go back"
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Button to go to next step"
+  },
+  "continueLabel": "Continue",
+  "@continueLabel": {
+    "description": "Button label for continuing to the next screen"
+  },
+  "submitButton": "Submit",
+  "@submitButton": {
+    "description": "Button to submit form"
+  },
+  "submittingButton": "Submitting...",
+  "@submittingButton": {
+    "description": "Button text while submitting form"
+  },
+  "helpCenter": "Help Center",
+  "@helpCenter": {
+    "description": "Title for help center"
+  },
+  "faq": "Frequently Asked Questions",
+  "@faq": {
+    "description": "Title for FAQ section"
+  },
+  "contactSupport": "Contact Support",
+  "@contactSupport": {
+    "description": "Title for contact support"
+  },
+  "feedbackTitle": "Share Your Feedback",
+  "@feedbackTitle": {
+    "description": "Title for feedback section"
+  },
+  "feedbackPrompt": "How was your experience?",
+  "@feedbackPrompt": {
+    "description": "Prompt for feedback"
+  },
+  "thankYouFeedback": "Thank you for your feedback!",
+  "@thankYouFeedback": {
+    "description": "Message after feedback is submitted"
+  },
+  "ticketSubject": "Subject",
+  "@ticketSubject": {
+    "description": "Label for ticket subject"
+  },
+  "ticketMessage": "Message",
+  "@ticketMessage": {
+    "description": "Label for ticket message"
+  },
+  "submitTicket": "Submit Support Ticket",
+  "@submitTicket": {
+    "description": "Button to submit support ticket"
+  },
+  "ratingLabel": "Rating",
+  "@ratingLabel": {
+    "description": "Label for rating input"
+  },
+  "commentsLabel": "Comments",
+  "@commentsLabel": {
+    "description": "Label for comments input"
+  },
+  "submitFeedback": "Submit Feedback",
+  "@submitFeedback": {
+    "description": "Button to submit feedback"
   },
   "adminDashboard": "Admin Dashboard",
   "@adminDashboard": {
@@ -421,18 +487,6 @@
   "@updateStatus": {
     "description": "Button to update flight status"
   },
-  "delay": "Delay",
-  "@delay": {
-    "description": "Status label for delay"
-  },
-  "cancellation": "Cancellation",
-  "@cancellation": {
-    "description": "Status label for cancellation"
-  },
-  "onTime": "On Time",
-  "@onTime": {
-    "description": "Status label for on time"
-  },
   "boardingStatus": "Boarding Status",
   "@boardingStatus": {
     "description": "Title for boarding status"
@@ -441,101 +495,83 @@
   "@checkInDesk": {
     "description": "Title for check-in desk"
   },
-  "submitTicket": "Submit Support Ticket",
-  "@submitTicket": {
-    "description": "Button to submit support ticket"
-  },
-  "ratingLabel": "Rating",
-  "@ratingLabel": {
-    "description": "Label for rating input"
-  },
-  "commentsLabel": "Comments",
-  "@commentsLabel": {
-    "description": "Label for comments input"
-  },
-  "submitFeedback": "Submit Feedback",
-  "@submitFeedback": {
-    "description": "Button to submit feedback"
-  },
-  "continueLabel": "Continue",
-  "@continueLabel": {
-    "description": "Button label for continuing to the next screen"
-  },
-  "loading": "Loading...",
-  "@loading": {
-    "description": "Loading indicator text"
-  },
-  "error": "Error",
-  "@error": {
-    "description": "Generic error message"
-  },
-  "success": "Success",
-  "@success": {
-    "description": "Generic success message"
-  },
-  "retry": "Retry",
-  "@retry": {
-    "description": "Button to retry"
-  },
-  "invalidEmail": "Please enter a valid email address",
-  "@invalidEmail": {
-    "description": "Validation message for email"
-  },
-  "passwordMismatch": "Passwords do not match",
-  "@passwordMismatch": {
-    "description": "Validation message for password mismatch"
-  },
-  "statusCancelled": "Cancelled",
-  "@statusCancelled": {
-    "description": "Status label for cancelled"
-  },
-  "statusCompleted": "Completed",
-  "@statusCompleted": {
-    "description": "Status label for completed"
-  },
-  "statusDelayed": "Delayed",
-  "@statusDelayed": {
-    "description": "Status label for delayed"
-  },
-  "statusBoarding": "Boarding",
-  "@statusBoarding": {
-    "description": "Status label for boarding"
-  },
-  "statusDeparted": "Departed",
-  "@statusDeparted": {
-    "description": "Status label for departed"
+  "capacityWarning": "Capacity: {current}/{max}",
+  "@capacityWarning": {
+    "description": "Capacity warning for employees",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "120"
+      },
+      "max": {
+        "type": "int",
+        "example": "150"
+      }
+    }
   },
   "bookingInquiryTitle": "Booking Inquiry",
   "@bookingInquiryTitle": {
     "description": "Title for booking inquiry"
   },
+  "bookingInquirySubtitle": "Need help with your booking? We're here to assist you with any questions or concerns.",
+  "@bookingInquirySubtitle": {
+    "description": "Subtitle for booking inquiry screen"
+  },
   "bookingIdLabel": "Booking ID",
   "@bookingIdLabel": {
     "description": "Label for booking ID"
-  },    
-  "bookingIdHint": "Enter your booking reference",
+  },
+  "bookingIdHint": "Enter your booking reference (e.g., KQ123ABC)",
   "@bookingIdHint": {
     "description": "Hint text for booking ID"
+  },
+  "bookingIdHelper": "This is your 6-character confirmation code",
+  "@bookingIdHelper": {
+    "description": "Helper text for booking ID field"
   },
   "bookingIdRequired": "Please enter your booking ID",
   "@bookingIdRequired": {
     "description": "Validation message for booking ID"
   },
+  "bookingIdTooShort": "Booking ID must be at least 6 characters",
+  "@bookingIdTooShort": {
+    "description": "Validation message for booking ID length"
+  },
+  "bookingIdInvalidFormat": "Booking ID must contain only letters and numbers",
+  "@bookingIdInvalidFormat": {
+    "description": "Validation message for booking ID format"
+  },
   "inquiryDetails": "Inquiry Details",
   "@inquiryDetails": {
     "description": "Label for inquiry details"
   },
-  "inquiryHint": "Enter your inquiry details",
+  "inquiryHint": "Please describe your issue or question in detail...",
   "@inquiryHint": {
     "description": "Hint text for inquiry details"
   },
-  "inquiryRequired": "Please enter your inquiry details",
+  "inquiryHelper": "Please be as specific as possible to help us assist you better",
+  "@inquiryHelper": {
+    "description": "Helper text for inquiry details field"
+  },
+  "inquiryRequired": "Please describe your inquiry",
   "@inquiryRequired": {
     "description": "Validation message for inquiry details"
   },
-  "inquiryTooShort": "Inquiry details must be at least 20 characters long",
+  "inquiryTooShort": "Please provide more details (minimum 20 characters)",
   "@inquiryTooShort": {
     "description": "Validation message for inquiry details length"
+  },
+  "inquirySubmittedTitle": "Inquiry Submitted",
+  "@inquirySubmittedTitle": {
+    "description": "Title for inquiry submitted confirmation"
+  },
+  "inquirySubmittedMessage": "Your inquiry has been submitted successfully. We will get back to you within 24-48 hours.",
+  "@inquirySubmittedMessage": {
+    "description": "Message for inquiry submitted confirmation"
+  },
+  "okButton": "OK",
+  "@okButton": {
+    "description": "Button text to acknowledge and close the dialog"
   },
   "faqSectionTitle": "Frequently Asked Questions",
   "@faqSectionTitle": {
@@ -545,7 +581,7 @@
   "@faqQuestion1": {
     "description": "Question 1 for FAQ section"
   },
-  "faqAnswer1": "You can modify your booking up to 24 hours before departure through our app or website.",
+  "faqAnswer1": "You can modify your booking up to 24 hours before departure through our app or website. Changes may be subject to fare differences and fees.",
   "@faqAnswer1": {
     "description": "Answer 1 for FAQ section"
   },
@@ -553,7 +589,7 @@
   "@faqQuestion2": {
     "description": "Question 2 for FAQ section"
   },
-  "faqAnswer2": "Cancellations made more than 48 hours before departure receive a full refund. Later cancellations may incur fees",
+  "faqAnswer2": "Cancellations made more than 48 hours before departure receive a full refund. Later cancellations may incur fees based on ticket type.",
   "@faqAnswer2": {
     "description": "Answer 2 for FAQ section"
   },
@@ -561,7 +597,7 @@
   "@faqQuestion3": {
     "description": "Question 3 for FAQ section"
   },
-  "faqAnswer3": "Our customer support team typically responds within 24 hours during business days",
+  "faqAnswer3": "We typically respond to inquiries within 24-48 hours during business days. Urgent matters are prioritized.",
   "@faqAnswer3": {
     "description": "Answer 3 for FAQ section"
   },
@@ -569,9 +605,184 @@
   "@faqQuestion4": {
     "description": "Question 4 for FAQ section"
   },
-  "faqAnswer4": "You can contact customer support through the app or by calling our hotline.",
+  "faqAnswer4": "You can contact customer support through this app, call our hotline, or visit our service desk at the airport.",
   "@faqAnswer4": {
     "description": "Answer 4 for FAQ section"
+  },
+  "faqQuestion5": "What if I lose my ticket?",
+  "@faqQuestion5": {
+    "description": "Question 5 for FAQ section"
+  },
+  "faqAnswer5": "If you lose your ticket, contact customer support immediately with your booking ID. We can resend your e-ticket or help you at check-in.",
+  "@faqAnswer5": {
+    "description": "Answer 5 for FAQ section"
+  },
+  "alternativeContactTitle": "Other Ways to Reach Us",
+  "@alternativeContactTitle": {
+    "description": "Title for alternative contact methods section"
+  },
+  "phoneSupport": "Phone Support",
+  "@phoneSupport": {
+    "description": "Label for phone support option"
+  },
+  "phoneSupportNumber": "+254 20 327 4747",
+  "@phoneSupportNumber": {
+    "description": "Phone support number"
+  },
+  "emailSupport": "Email Support",
+  "@emailSupport": {
+    "description": "Label for email support option"
+  },
+  "emailSupportAddress": "support@kenya-airways.com",
+  "@emailSupportAddress": {
+    "description": "Email support address"
+  },
+  "inquiryTypeLabel": "Inquiry Type",
+  "@inquiryTypeLabel": {
+    "description": "Label for inquiry type selection"
+  },
+  "selectInquiryType": "Select inquiry type",
+  "@selectInquiryType": {
+    "description": "Hint text for inquiry type dropdown"
+  },
+  "inquiryTypeRequired": "Please select an inquiry type",
+  "@inquiryTypeRequired": {
+    "description": "Validation message for inquiry type selection"
+  },
+  "inquiryTypeGeneral": "General Inquiry",
+  "@inquiryTypeGeneral": {
+    "description": "Label for general inquiry type"
+  },
+  "inquiryTypeRefund": "Refund Request",
+  "@inquiryTypeRefund": {
+    "description": "Label for refund request inquiry type"
+  },
+  "inquiryTypeModification": "Flight Modification",
+  "@inquiryTypeModification": {
+    "description": "Label for flight modification inquiry type"
+  },
+  "inquiryTypeBaggage": "Baggage Issue",
+  "@inquiryTypeBaggage": {
+    "description": "Label for baggage inquiry type"
+  },
+  "inquiryTypeCheckin": "Check-in Support",
+  "@inquiryTypeCheckin": {
+    "description": "Label for check-in inquiry type"
+  },
+  "inquiryTypeComplaint": "Complaint",
+  "@inquiryTypeComplaint": {
+    "description": "Label for complaint inquiry type"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Generic error message"
+  },
+  "success": "Success",
+  "@success": {
+    "description": "Generic success message"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator text"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Button to retry"
+  },
+  "networkError": "Network error occurred. Please check your connection and try again.",
+  "@networkError": {
+    "description": "Message displayed when a network error occurs"
+  },
+  "timeoutError": "Request timed out. Please try again later.",
+  "@timeoutError": {
+    "description": "Message displayed when a request times out"
+  },
+  "bookingNotFoundError": "Booking not found. Please check your booking ID and try again.",
+  "@bookingNotFoundError": {
+    "description": "Error message when booking ID is not found"
+  },
+  "authenticationError": "Authentication failed. Please try again or contact support.",
+  "@authenticationError": {
+    "description": "Error message for authentication failures"
+  },
+  "generalError": "Something went wrong. Please try again later.",
+  "@generalError": {
+    "description": "Generic error message for unexpected errors"
+  },
+  "bookingError": "Error processing your booking. Please try again later.",
+  "@bookingError": {
+    "description": "Error message when booking fails"
+  },
+  "flightSearchError": "Error searching for flights. Please check your criteria and try again.",
+  "@flightSearchError": {
+    "description": "Error message when flight search fails"
+  },
+  "sessionExpired": "Session expired. Please log in again",
+  "@sessionExpired": {
+    "description": "Message when session expires"
+  },
+  "inquiryTypeCancellation": "Booking Cancellation",
+  "@inquiryTypeCancellation": {
+    "description": "Label for booking cancellation inquiry type"
+  },
+  "inquiryTypeSeatChange": "Seat Change",
+  "@inquiryTypeSeatChange": {
+    "description": "Label for seat change inquiry type"
+  },
+  "inquiryTypeFlightChange": "Flight Change",
+  "@inquiryTypeFlightChange": {
+    "description": "Label for flight change inquiry type"
+  },
+  "inquiryTypeSpecialAssistance": "Special Assistance",
+  "@inquiryTypeSpecialAssistance": {
+    "description": "Label for special assistance inquiry type"
+  },
+  "inquiryTypeFeedback": "Feedback",
+  "@inquiryTypeFeedback": {
+    "description": "Label for feedback inquiry type"
+  },
+  "inquiryTypeOther": "Other",
+  "@inquiryTypeOther": {
+    "description": "Label for other inquiry type"
+  },
+  "priorityLabel": "Priority Level",
+  "@priorityLabel": {
+    "description": "Label for priority level selection"
+  },
+  "selectPriority": "Select Priority",
+  "@selectPriority": {
+    "description": "Hint text for priority dropdown"
+  },
+  "priorityLow": "Low Priority",
+  "@priorityLow": {
+    "description": "Label for low priority"
+  },
+  "priorityMedium": "Medium Priority",
+  "@priorityMedium": {
+    "description": "Label for medium priority"
+  },
+  "priorityHigh": "High Priority",
+  "@priorityHigh": {
+    "description": "Label for high priority"
+  },
+  "priorityUrgent": "Urgent",
+  "@priorityUrgent": {
+    "description": "Label for urgent priority"
+  },
+  "optionalField": "Optional",
+  "@optionalField": {
+    "description": "Label for optional fields"
+  },
+  "loginRequiredError": "Login required. Please log in to continue.",
+  "@loginRequiredError": {
+    "description": "Message displayed when login is required"
+  },
+  "resetButton": "Reset",
+  "@resetButton": {
+    "description": "Button to reset the form or fields"
+  },
+  "inquiryTypeUnknown": "Unknown Inquiry Type",
+  "@inquiryTypeUnknown": {
+    "description": "Label for unknown inquiry type"
   }
-
 }

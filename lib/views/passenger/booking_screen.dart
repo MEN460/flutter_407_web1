@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/l10n/app_localizations.dart';
-
-enum InquiryType { general, refund, modification, baggage, checkin, complaint }
+import 'package:k_airways_flutter/models/inquiry_type.dart';
+import 'package:k_airways_flutter/providers.dart';
 
 class BookingInquiryScreen extends ConsumerStatefulWidget {
   const BookingInquiryScreen({super.key});
@@ -18,43 +17,57 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
   final _scrollController = ScrollController();
   final _bookingIdController = TextEditingController();
   final _inquiryController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _bookingIdFocusNode = FocusNode();
+  final _inquiryFocusNode = FocusNode();
 
   bool _isSubmitting = false;
   String? _submissionError;
-  InquiryType _selectedInquiryType = InquiryType.general;
+  InquiryType? _selectedInquiryType;
 
   @override
   void dispose() {
-    _formKey.currentState?.dispose();
     _scrollController.dispose();
     _bookingIdController.dispose();
     _inquiryController.dispose();
-    _emailController.dispose();
+    _bookingIdFocusNode.dispose();
+    _inquiryFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _submitInquiry() async {
+    FocusScope.of(context).unfocus();
+
+    if (!mounted) return;
+    setState(() => _submissionError = null);
+
     if (!_formKey.currentState!.validate()) {
-      // Scroll to first error field
       _scrollToError();
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-      _submissionError = null;
-    });
+    if (_selectedInquiryType == null) {
+      setState(
+        () => _submissionError = _getLocalizedError('inquiryTypeRequired'),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
 
     try {
       final bookingService = ref.read(bookingServiceProvider);
+      final userEmail = ref.read(currentUserProvider)?.email;
+
+      if (userEmail == null) {
+        throw Exception('User not logged in');
+      }
+
       await bookingService.submitInquiry(
         bookingId: _bookingIdController.text.trim(),
         message: _inquiryController.text.trim(),
-        email: _emailController.text.trim(),
-        inquiryType: _selectedInquiryType,
-        details:
-            'Inquiry about booking - ${_getInquiryTypeLabel(_selectedInquiryType)}',
+        email: userEmail,
+        inquiryType: _selectedInquiryType!,
+        details: _getInquiryTypeLabel(_selectedInquiryType!),
       );
 
       if (mounted) {
@@ -62,7 +75,9 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
         _resetForm();
       }
     } catch (e) {
-      setState(() => _submissionError = _parseError(e));
+      if (mounted) {
+        setState(() => _submissionError = _parseError(e));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -77,14 +92,82 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
   }
 
   void _resetForm() {
-    _formKey.currentState!.reset();
+    _formKey.currentState?.reset();
     _bookingIdController.clear();
     _inquiryController.clear();
-    _emailController.clear();
     setState(() {
-      _selectedInquiryType = InquiryType.general;
+      _selectedInquiryType = null;
       _submissionError = null;
     });
+  }
+
+  String _parseError(Object error) {
+    final errorStr = error.toString().toLowerCase();
+    final loc = AppLocalizations.of(context)!;
+
+    if (errorStr.contains('network') || errorStr.contains('internet')) {
+      return loc.networkError;
+    } else if (errorStr.contains('timeout')) {
+      return loc.timeoutError;
+    } else if (errorStr.contains('404')) {
+      return loc.bookingNotFoundError;
+    } else if (errorStr.contains('401') || errorStr.contains('403')) {
+      return loc.authenticationError;
+    } else if (errorStr.contains('not logged in')) {
+      return loc.loginRequiredError;
+    } else {
+      return loc.generalError;
+    }
+  }
+
+  String _getLocalizedError(String errorKey) {
+    final loc = AppLocalizations.of(context)!;
+    switch (errorKey) {
+      case 'inquiryTypeRequired':
+        return loc.inquiryTypeRequired;
+      case 'bookingIdRequired':
+        return loc.bookingIdRequired;
+      case 'bookingIdTooShort':
+        return loc.bookingIdTooShort;
+      case 'bookingIdInvalidFormat':
+        return loc.bookingIdInvalidFormat;
+      case 'inquiryRequired':
+        return loc.inquiryRequired;
+      case 'inquiryTooShort':
+        return loc.inquiryTooShort;
+      default:
+        return loc.generalError;
+    }
+  }
+
+  String _getInquiryTypeLabel(InquiryType type) {
+    final loc = AppLocalizations.of(context)!;
+    switch (type) {
+      case InquiryType.general:
+        return loc.inquiryTypeGeneral;
+      case InquiryType.refund:
+        return loc.inquiryTypeRefund;
+      case InquiryType.modification:
+        return loc.inquiryTypeModification;
+      case InquiryType.baggage:
+        return loc.inquiryTypeBaggage;
+      case InquiryType.checkin:
+        return loc.inquiryTypeCheckin;
+      case InquiryType.complaint:
+        return loc.inquiryTypeComplaint;
+      case InquiryType.cancellation:
+        return loc.inquiryTypeCancellation;
+      case InquiryType.seatChange:
+        return loc.inquiryTypeSeatChange;
+      case InquiryType.flightChange:
+        return loc.inquiryTypeFlightChange;
+      case InquiryType.specialAssistance:
+        return loc.inquiryTypeSpecialAssistance;
+      case InquiryType.feedback:
+        return loc.inquiryTypeFeedback;
+      case InquiryType.other:
+        return loc.inquiryTypeOther;
+      }
   }
 
   void _showSuccessDialog() {
@@ -110,46 +193,11 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
     );
   }
 
-  String _parseError(Object error) {
-    final errorStr = error.toString().toLowerCase();
-    final loc = AppLocalizations.of(context)!;
-
-    if (errorStr.contains('network') || errorStr.contains('internet')) {
-      return loc.networkError;
-    } else if (errorStr.contains('timeout')) {
-      return loc.timeoutError;
-    } else if (errorStr.contains('404')) {
-      return loc.bookingNotFoundError;
-    } else if (errorStr.contains('401') || errorStr.contains('403')) {
-      return loc.authenticationError;
-    } else {
-      return loc.generalError;
-    }
-  }
-
-  String _getInquiryTypeLabel(InquiryType type) {
-    final loc = AppLocalizations.of(context)!;
-    switch (type) {
-      case InquiryType.general:
-        return loc.inquiryTypeGeneral;
-      case InquiryType.refund:
-        return loc.inquiryTypeRefund;
-      case InquiryType.modification:
-        return loc.inquiryTypeModification;
-      case InquiryType.baggage:
-        return loc.inquiryTypeBaggage;
-      case InquiryType.checkin:
-        return loc.inquiryTypeCheckin;
-      case InquiryType.complaint:
-        return loc.inquiryTypeComplaint;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colors = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(loc.helpCenter), centerTitle: true),
@@ -164,7 +212,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
               // Header Section
               Card(
                 elevation: 0,
-                color: colorScheme.primaryContainer,
+                color: colors.primaryContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -174,7 +222,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                         children: [
                           Icon(
                             Icons.support_agent,
-                            color: colorScheme.onPrimaryContainer,
+                            color: colors.onPrimaryContainer,
                             size: 28,
                           ),
                           const SizedBox(width: 12),
@@ -182,7 +230,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                             child: Text(
                               loc.bookingInquiryTitle,
                               style: theme.textTheme.titleLarge?.copyWith(
-                                color: colorScheme.onPrimaryContainer,
+                                color: colors.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -193,7 +241,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                       Text(
                         loc.bookingInquirySubtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
+                          color: colors.onPrimaryContainer,
                         ),
                       ),
                     ],
@@ -202,6 +250,51 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
               ),
 
               const SizedBox(height: 24),
+
+              // Booking ID Field
+              Text(
+                loc.bookingIdLabel,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _bookingIdController,
+                focusNode: _bookingIdFocusNode,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: loc.bookingIdHint,
+                  prefixIcon: const Icon(Icons.confirmation_number),
+                  border: const OutlineInputBorder(),
+                  helperText: loc.bookingIdHelper,
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return loc.bookingIdRequired;
+                  }
+                  if (value.trim().length < 6) {
+                    return loc.bookingIdTooShort;
+                  }
+                  final bookingIdRegex = RegExp(r'^[A-Z0-9]{6,}$');
+                  if (!bookingIdRegex.hasMatch(value.trim().toUpperCase())) {
+                    return loc.bookingIdInvalidFormat;
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  final text = value.toUpperCase();
+                  _bookingIdController.value = _bookingIdController.value
+                      .copyWith(
+                        text: text,
+                        selection: TextSelection.collapsed(offset: text.length),
+                      );
+                },
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) => _inquiryFocusNode.requestFocus(),
+              ),
+
+              const SizedBox(height: 20),
 
               // Inquiry Type Selection
               Text(
@@ -225,90 +318,11 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _selectedInquiryType = value!;
-                  });
+                  setState(() => _selectedInquiryType = value);
                 },
                 validator: (value) {
                   if (value == null) {
                     return loc.inquiryTypeRequired;
-                  }
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              // Booking ID Field
-              Text(
-                loc.bookingIdLabel,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _bookingIdController,
-                textCapitalization: TextCapitalization.characters,
-                decoration: InputDecoration(
-                  hintText: loc.bookingIdHint,
-                  prefixIcon: const Icon(Icons.confirmation_number),
-                  border: const OutlineInputBorder(),
-                  helperText: loc.bookingIdHelper,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.bookingIdRequired;
-                  }
-                  if (value.trim().length < 6) {
-                    return loc.bookingIdTooShort;
-                  }
-                  // Add format validation if needed
-                  final bookingIdRegex = RegExp(r'^[A-Z0-9]{6,}$');
-                  if (!bookingIdRegex.hasMatch(value.trim().toUpperCase())) {
-                    return loc.bookingIdInvalidFormat;
-                  }
-                  return null;
-                },
-                onChanged: (value) {
-                  // Auto-format to uppercase
-                  final text = value.toUpperCase();
-                  _bookingIdController.value = _bookingIdController.value
-                      .copyWith(
-                        text: text,
-                        selection: TextSelection.collapsed(offset: text.length),
-                      );
-                },
-              ),
-
-              const SizedBox(height: 20),
-
-              // Email Field
-              Text(
-                loc.emailLabel,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  hintText: loc.emailHint,
-                  prefixIcon: const Icon(Icons.email),
-                  border: const OutlineInputBorder(),
-                  helperText: loc.emailHelper,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.emailRequired;
-                  }
-                  final emailRegex = RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  );
-                  if (!emailRegex.hasMatch(value.trim())) {
-                    return loc.emailInvalidFormat;
                   }
                   return null;
                 },
@@ -326,6 +340,7 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _inquiryController,
+                focusNode: _inquiryFocusNode,
                 decoration: InputDecoration(
                   hintText: loc.inquiryHint,
                   border: const OutlineInputBorder(),
@@ -352,21 +367,18 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: colorScheme.errorContainer,
+                    color: colors.errorContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: colorScheme.onErrorContainer,
-                      ),
+                      Icon(Icons.error_outline, color: colors.onErrorContainer),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           _submissionError!,
                           style: TextStyle(
-                            color: colorScheme.onErrorContainer,
+                            color: colors.onErrorContainer,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -401,158 +413,21 @@ class _BookingInquiryScreenState extends ConsumerState<BookingInquiryScreen> {
                 ),
               ),
 
+              if (!_isSubmitting) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: _resetForm,
+                    child: Text(loc.resetButton),
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 32),
-
-              // Contact Alternatives
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        loc.alternativeContactTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildContactOption(
-                        icon: Icons.phone,
-                        title: loc.phoneSupport,
-                        subtitle: loc.phoneSupportNumber,
-                        onTap: () {
-                          // Implement phone call functionality
-                        },
-                      ),
-                      const Divider(),
-                      _buildContactOption(
-                        icon: Icons.email,
-                        title: loc.emailSupport,
-                        subtitle: loc.emailSupportAddress,
-                        onTap: () {
-                          // Implement email functionality
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // FAQ Section
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        loc.faqSectionTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildFAQItem(loc.faqQuestion1, loc.faqAnswer1),
-                      _buildFAQItem(loc.faqQuestion2, loc.faqAnswer2),
-                      _buildFAQItem(loc.faqQuestion3, loc.faqAnswer3),
-                      _buildFAQItem(loc.faqQuestion4, loc.faqAnswer4),
-                      _buildFAQItem(loc.faqQuestion5, loc.faqAnswer5),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildContactOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.onPrimaryContainer,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFAQItem(String question, String answer) {
-    final theme = Theme.of(context);
-
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: 16.0),
-        title: Text(
-          question,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        children: [
-          Text(
-            answer,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
       ),
     );
   }

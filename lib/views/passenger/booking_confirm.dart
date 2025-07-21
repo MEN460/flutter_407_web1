@@ -66,7 +66,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                       _buildDetailRow(
                         context,
                         'Booking ID',
-                        booking.id ?? 'Not available',
+                        booking.id,
                         Icons.confirmation_number,
                       ),
 
@@ -102,7 +102,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                         _buildDetailRow(
                           context,
                           'Departure',
-                          _formatDateTime(booking.flight!.departureTime!),
+                          _formatDateTime(booking.flight!.departureTime),
                           Icons.schedule,
                         ),
                       ],
@@ -236,15 +236,8 @@ class BookingConfirmationScreen extends StatelessWidget {
     final seatNumber = booking.seatNumber;
     final seatClass = booking.seatClass;
 
-    if (seatNumber != null && seatClass != null) {
-      return '$seatNumber (${seatClass.toUpperCase()})';
-    } else if (seatNumber != null) {
-      return seatNumber;
-    } else if (seatClass != null) {
-      return 'Class: ${seatClass.toUpperCase()}';
-    } else {
-      return 'Not assigned';
-    }
+    return '$seatNumber (${seatClass.toUpperCase()})';
+    
   }
 
   String _formatDateTime(DateTime dateTime) {

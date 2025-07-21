@@ -130,10 +130,10 @@ class _FlightOperationsScreenState
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Discard'),
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.error,
                 ),
+                child: const Text('Discard'),
               ),
             ],
           ),
@@ -535,7 +535,7 @@ class _StatusUpdateForm extends StatelessWidget {
           controller: gateController,
           decoration: const InputDecoration(
             labelText: 'Gate',
-            prefixIcon: Icon(Icons.gate),
+            prefixIcon: Icon(Icons.gite),
             border: OutlineInputBorder(),
             hintText: 'e.g., A12, B5',
           ),

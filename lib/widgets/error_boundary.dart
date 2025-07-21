@@ -1,416 +1,442 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:k_airways_flutter/providers.dart';
+import 'package:flutter/scheduler.dart';
 
-/// A comprehensive error boundary widget that catches and handles various types of errors
-class ErrorBoundary extends ConsumerStatefulWidget {
+class ErrorBoundary extends StatefulWidget {
   final Widget child;
-  final Widget Function(
-    Object error,
-    StackTrace? stackTrace,
-    VoidCallback retry,
-  )?
-  errorBuilder;
-  final void Function(Object error, StackTrace? stackTrace)? onError;
-  final bool showErrorDetails;
-  final String? errorMessage;
+  final Widget Function(FlutterErrorDetails)? fallback;
+  final VoidCallback? onError;
+  final bool resetOnHotReload;
 
   const ErrorBoundary({
-    super.key,
+    Key? key,
     required this.child,
-    this.errorBuilder,
+    this.fallback,
     this.onError,
-    this.showErrorDetails = kDebugMode,
-    this.errorMessage,
-  });
+    this.resetOnHotReload = true,
+  }) : super(key: key);
 
   @override
-  ConsumerState<ErrorBoundary> createState() => _ErrorBoundaryState();
+  State<ErrorBoundary> createState() => _ErrorBoundaryState();
 }
 
-class _ErrorBoundaryState extends ConsumerState<ErrorBoundary> {
-  Object? _error;
-  StackTrace? _stackTrace;
-  late final StreamSubscription<void> _errorSubscription;
+class _ErrorBoundaryState extends State<ErrorBoundary> {
+  // Use ValueNotifier instead of setState to avoid build phase violations
+  final ValueNotifier<_ErrorState> _errorNotifier = ValueNotifier(
+    const _ErrorState(),
+  );
+
+  bool _isDisposed = false;
+  bool _isErrorHandlingSetup = false;
+  ErrorWidgetBuilder? _originalErrorWidgetBuilder;
+  FlutterExceptionHandler? _originalOnError;
+  Timer? _resetTimer;
+  int _errorCount = 0;
+  static const int _maxErrorCount = 5;
+
+  // Global error tracking to prevent multiple boundaries from interfering
+  static bool _globalErrorHandling = false;
 
   @override
   void initState() {
     super.initState();
-    _setupErrorHandling();
+
+    // Setup error boundary after first frame
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isDisposed) {
+        _setupErrorBoundary();
+      }
+    });
+
+    // Handle hot reload resets
+    if (widget.resetOnHotReload && kDebugMode) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isDisposed) {
+          _resetError();
+        }
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    _errorSubscription.cancel();
-    super.dispose();
+  void _setupErrorBoundary() {
+    if (_isErrorHandlingSetup || _isDisposed || _globalErrorHandling) return;
+
+    _isErrorHandlingSetup = true;
+    _globalErrorHandling = true;
+
+    // Store original error handlers
+    _originalOnError = FlutterError.onError;
+    _originalErrorWidgetBuilder = ErrorWidget.builder;
+
+    // Set up error handling that never calls setState
+    FlutterError.onError = (FlutterErrorDetails details) {
+      // Always call original handler first
+      _originalOnError?.call(details);
+
+      // Handle error without setState
+      _handleErrorSafely(details);
+    };
+
+    // Replace error widget builder
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      _handleErrorSafely(details);
+
+      return Container(
+        constraints: const BoxConstraints(minHeight: 50, minWidth: 50),
+        color: Colors.red[50],
+        child: const Center(
+          child: Icon(Icons.error_outline, color: Colors.red, size: 24),
+        ),
+      );
+    };
   }
 
-  void _setupErrorHandling() {
-    // Listen to async errors in the current zone
-    _errorSubscription = Stream.periodic(const Duration(milliseconds: 100)).listen((
-      _,
-    ) {
-      // This is a placeholder - in practice, you might use other error monitoring
+  void _handleErrorSafely(FlutterErrorDetails details) {
+    if (_isDisposed) return;
+
+    // Increment error count
+    _errorCount++;
+    if (_errorCount > _maxErrorCount) {
+      debugPrint('ErrorBoundary: Too many errors, stopping error handling');
+      return;
+    }
+
+    // Update error state using ValueNotifier (no setState needed)
+    _errorNotifier.value = _ErrorState(
+      hasError: true,
+      errorDetails: details,
+      errorCount: _errorCount,
+    );
+
+    // Call error callback
+    try {
+      widget.onError?.call();
+    } catch (e) {
+      debugPrint('ErrorBoundary: onError callback failed: $e');
+    }
+
+    // Schedule auto-reset
+    _scheduleAutoReset();
+  }
+
+  void _scheduleAutoReset() {
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(seconds: 15), () {
+      if (!_isDisposed) {
+        _resetError();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_error != null) {
-      return widget.errorBuilder?.call(_error!, _stackTrace, _retry) ??
-          _buildDefaultErrorWidget();
-    }
+    return ValueListenableBuilder<_ErrorState>(
+      valueListenable: _errorNotifier,
+      builder: (context, errorState, _) {
+        if (errorState.hasError && errorState.errorDetails != null) {
+          try {
+            return widget.fallback?.call(errorState.errorDetails!) ??
+                _defaultErrorWidget(errorState.errorDetails!);
+          } catch (e) {
+            return _safeErrorWidget();
+          }
+        }
 
-    // Wrap child in error-catching zone
-    return _ErrorCatcher(onError: _handleError, child: widget.child);
+        // Wrap child in error-catching builder
+        return _SafeBuilder(onError: _handleErrorSafely, child: widget.child);
+      },
+    );
   }
 
-  void _handleError(Object error, StackTrace? stackTrace) {
-    if (mounted) {
-      setState(() {
-        _error = error;
-        _stackTrace = stackTrace;
-      });
-
-      // Log error
-      try {
-        final logger = ref.read(loggerProvider);
-        logger.error('ErrorBoundary caught error: $error', stackTrace);
-      } catch (logError) {
-        // Fallback logging
-        debugPrint('ErrorBoundary: Failed to log error: $logError');
-        debugPrint('Original error: $error');
-      }
-
-      // Call custom error handler
-      widget.onError?.call(error, stackTrace);
-    }
-  }
-
-  void _retry() {
-    if (mounted) {
-      setState(() {
-        _error = null;
-        _stackTrace = null;
-      });
-    }
-  }
-
-  Widget _buildDefaultErrorWidget() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _safeErrorWidget() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Error Icon
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.errorContainer.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: Icon(
-              Icons.error_outline,
-              size: 48,
-              color: theme.colorScheme.error,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Error Message
-          Text(
-            widget.errorMessage ?? 'Something went wrong',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'We apologize for the inconvenience. Please try again.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 24),
-
-          // Action Buttons
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _retry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
+      constraints: const BoxConstraints.expand(),
+      color: Colors.red[50],
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 48),
+            SizedBox(height: 16),
+            Text(
+              'Critical Error',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
               ),
-              if (widget.showErrorDetails)
-                OutlinedButton.icon(
-                  onPressed: () => _showErrorDetails(context),
-                  icon: const Icon(Icons.bug_report),
-                  label: const Text('Details'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Debug Information (only in debug mode)
-          if (widget.showErrorDetails && _error != null) ...[
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey[900] : Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Error Details (Debug Mode)',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _error.toString(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                ],
-              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'The application encountered a critical error.\nPlease restart the app.',
+              textAlign: TextAlign.center,
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  void _showErrorDetails(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (context) =>
-          ErrorDetailsDialog(error: _error!, stackTrace: _stackTrace),
+  Widget _defaultErrorWidget(FlutterErrorDetails details) {
+    return Material(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Something went wrong'),
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _resetError),
+          ],
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Error Type:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              _getErrorType(details),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error Details:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            details.exception.toString(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (kDebugMode && details.stack != null) ...[
+                            const SizedBox(height: 12),
+                            const Divider(),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Stack Trace (Debug Mode):',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              details.stack.toString(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _resetError,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Try Again'),
+                      ),
+                    ),
+                    if (_errorCount > 1) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _resetWithDelay,
+                          icon: const Icon(Icons.timer),
+                          label: const Text('Reset & Wait'),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
-}
 
-/// Widget that catches errors in its child widget tree
-class _ErrorCatcher extends StatefulWidget {
-  final Widget child;
-  final void Function(Object error, StackTrace? stackTrace) onError;
+  String _getErrorType(FlutterErrorDetails details) {
+    final error = details.exception.toString().toLowerCase();
 
-  const _ErrorCatcher({required this.child, required this.onError});
+    if (error.contains('setstate') || error.contains('markneedsbuild')) {
+      return 'Build Phase Violation';
+    } else if (error.contains('!_dirty') || error.contains('dirty')) {
+      return 'Widget Tree Corruption';
+    } else if (error.contains('renderobject') || error.contains('child')) {
+      return 'Render Tree Inconsistency';
+    } else if (error.contains('buildtarget') || error.contains('build')) {
+      return 'Build Context Issue';
+    } else if (error.contains('mounted') || error.contains('disposed')) {
+      return 'Widget Lifecycle Issue';
+    } else if (error.contains('assertion')) {
+      return 'Flutter Framework Assertion';
+    } else {
+      return 'General Error';
+    }
+  }
 
-  @override
-  State<_ErrorCatcher> createState() => _ErrorCatcherState();
-}
+  void _resetError() {
+    if (_isDisposed) return;
 
-class _ErrorCatcherState extends State<_ErrorCatcher> {
-  ErrorWidgetBuilder? _originalErrorBuilder;
+    _resetTimer?.cancel();
 
-  @override
-  void initState() {
-    super.initState();
-    // Store the original error builder
-    _originalErrorBuilder = ErrorWidget.builder;
+    // Reset using ValueNotifier (no setState)
+    _errorNotifier.value = _ErrorState();
+    _errorCount = 0;
+  }
 
-    // Set custom error builder
-    ErrorWidget.builder = (FlutterErrorDetails details) {
-      // Call error handler
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          widget.onError(details.exception, details.stack);
-        }
-      });
-
-      // Return a simple error widget to prevent cascading errors
-      return const SizedBox.shrink();
-    };
+  void _resetWithDelay() {
+    Timer(const Duration(seconds: 3), () {
+      if (!_isDisposed) {
+        _resetError();
+      }
+    });
   }
 
   @override
   void dispose() {
-    // Restore original error builder
-    if (_originalErrorBuilder != null) {
-      ErrorWidget.builder = _originalErrorBuilder!;
-    }
-    super.dispose();
-  }
+    _isDisposed = true;
+    _resetTimer?.cancel();
+    _errorNotifier.dispose();
 
-  @override
-  Widget build(BuildContext context) {
-    // Use a Builder to catch synchronous errors
-    return Builder(
-      builder: (context) {
+    // Restore original error handlers
+    if (_isErrorHandlingSetup) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         try {
-          return widget.child;
-        } catch (error, stackTrace) {
-          // Catch synchronous errors
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              widget.onError(error, stackTrace);
-            }
-          });
-          return const SizedBox.shrink();
+          FlutterError.onError = _originalOnError;
+          ErrorWidget.builder =
+              _originalErrorWidgetBuilder ??
+              (FlutterErrorDetails details) => ErrorWidget(details.exception);
+          _globalErrorHandling = false;
+        } catch (e) {
+          debugPrint('Error restoring handlers: $e');
         }
-      },
-    );
+      });
+    }
+
+    super.dispose();
   }
 }
 
-/// Dialog showing detailed error information
-class ErrorDetailsDialog extends StatelessWidget {
-  final Object error;
-  final StackTrace? stackTrace;
+/// Error state container
+class _ErrorState {
+  final bool hasError;
+  final FlutterErrorDetails? errorDetails;
+  final int errorCount;
 
-  const ErrorDetailsDialog({super.key, required this.error, this.stackTrace});
+  const _ErrorState({
+    this.hasError = false,
+    this.errorDetails,
+    this.errorCount = 0,
+  });
+}
+
+/// Safe builder that catches build-time errors without using setState
+class _SafeBuilder extends StatelessWidget {
+  final Widget child;
+  final Function(FlutterErrorDetails) onError;
+
+  const _SafeBuilder({required this.child, required this.onError});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    try {
+      return child;
+    } catch (error, stackTrace) {
+      // Create error details
+      final details = FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'ErrorBoundary',
+        context: ErrorDescription('Error caught during widget build'),
+      );
 
-    return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(Icons.bug_report, color: Colors.red),
-          SizedBox(width: 8),
-          Text('Error Details'),
-        ],
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Error:',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.error.withOpacity(0.3),
-                ),
-              ),
-              child: Text(
-                error.toString(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontFamily: 'monospace',
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ),
+      // Report error without triggering setState
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        onError(details);
+      });
 
-            if (stackTrace != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Stack Trace:',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 200,
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    stackTrace.toString(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontFamily: 'monospace',
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
+      // Return safe fallback immediately
+      return Container(
+        constraints: const BoxConstraints(minHeight: 50, minWidth: 50),
+        color: Colors.red[50],
+        child: const Center(
+          child: Icon(Icons.error_outline, color: Colors.red, size: 24),
         ),
-      ),
-      actions: [
-        TextButton.icon(
-          onPressed: () {
-            // Copy error to clipboard
-            // Note: You'd need to add clipboard functionality
-            Navigator.of(context).pop();
-          },
-          icon: const Icon(Icons.copy),
-          label: const Text('Copy'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
-        ),
-      ],
-    );
+      );
+    }
   }
 }
 
 /// Extension to add error boundary functionality to any widget
 extension ErrorBoundaryExtension on Widget {
+  /// Wraps this widget with an ErrorBoundary
   Widget withErrorBoundary({
-    Widget Function(Object error, StackTrace? stackTrace, VoidCallback retry)?
-    errorBuilder,
-    void Function(Object error, StackTrace? stackTrace)? onError,
-    bool showErrorDetails = kDebugMode,
-    String? errorMessage,
+    Widget Function(FlutterErrorDetails)? fallback,
+    VoidCallback? onError,
+    bool resetOnHotReload = true,
   }) {
     return ErrorBoundary(
-      errorBuilder: errorBuilder,
+      fallback: fallback,
       onError: onError,
-      showErrorDetails: showErrorDetails,
-      errorMessage: errorMessage,
+      resetOnHotReload: resetOnHotReload,
       child: this,
     );
   }

@@ -1,6 +1,7 @@
 class User {
   final String id;
   final String email;
+  final String name;
   final String role;
   final bool isActive;
   final DateTime? createdAt;
@@ -8,6 +9,8 @@ class User {
   User({
     required this.id,
     required this.email,
+    this.name = '',
+    // Normalize role to lowercase for consistency
     required this.role,
     required this.isActive,
     this.createdAt,

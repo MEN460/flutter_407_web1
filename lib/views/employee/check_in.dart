@@ -115,7 +115,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     // Check check-in time window (typically 24 hours before to 2 hours before departure)
     if (_booking!.flight?.departureTime != null) {
       final now = DateTime.now();
-      final departureTime = _booking!.flight!.departureTime!;
+      final departureTime = _booking!.flight!.departureTime;
       final timeToDeparture = departureTime.difference(now);
 
       if (timeToDeparture.inHours > 24) {
@@ -329,7 +329,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             filled: true,
             fillColor: Theme.of(
               context,
-            ).colorScheme.surfaceVariant.withOpacity(0.3),
+            ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
           ),
           textCapitalization: TextCapitalization.characters,
           validator: _validateBookingId,
@@ -424,7 +424,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               const SizedBox(height: 12),
               _buildDetailRow(
                 'Departure',
-                _formatDateTime(_booking!.flight!.departureTime!),
+                _formatDateTime(_booking!.flight!.departureTime),
               ),
             ],
             if (_errorMessage != null) ...[

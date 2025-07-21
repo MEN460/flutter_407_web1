@@ -186,7 +186,7 @@ class _SystemLogsScreenState extends ConsumerState<SystemLogsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(systemLogsProvider),
+           onPressed: () => ref.invalidate(systemLogsProvider), 
             tooltip: 'Refresh Logs',
           ),
           PopupMenuButton<String>(
@@ -347,7 +347,7 @@ class _SystemLogsScreenState extends ConsumerState<SystemLogsScreen> {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
-                      onPressed: () => ref.refresh(systemLogsProvider),
+                      onPressed: () => ref.invalidate(systemLogsProvider), 
                       icon: const Icon(Icons.refresh),
                       label: const Text('Retry'),
                     ),
@@ -391,7 +391,8 @@ class _SystemLogsScreenState extends ConsumerState<SystemLogsScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.refresh(systemLogsProvider);
+                    ref.invalidate(systemLogsProvider);
+                    await ref.read(systemLogsProvider.future);
                   },
                   child: ListView.builder(
                     itemCount: filteredLogs.length,
@@ -534,7 +535,7 @@ class _SystemLogsScreenState extends ConsumerState<SystemLogsScreen> {
           children: [
             Icon(log.status.icon, color: log.status.color),
             const SizedBox(width: 8),
-            Expanded(child: Text('Log Details')),
+            const Expanded(child: Text('Log Details')),
           ],
         ),
         content: SingleChildScrollView(

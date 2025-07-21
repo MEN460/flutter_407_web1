@@ -12,6 +12,9 @@ class ApiEndpoints {
   static const register = '/auth/register';
   // NOTE: refreshToken is not in OpenAPI but add if Flask supports it
   static const refreshToken = '/auth/refresh';
+  static const String refreshTokenStorageKey = 'refresh_token';
+  static const logout = '/auth/logout';
+
 
   // -----------------------
   // 🛫 Flights

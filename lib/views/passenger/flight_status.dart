@@ -21,14 +21,14 @@ class FlightStatusScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(flightStatusProvider(flightId)),
+            onPressed: () => ref.invalidate(flightStatusProvider(flightId)),
             tooltip: 'Refresh status',
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.refresh(flightStatusProvider(flightId));
+          ref.invalidate(flightStatusProvider(flightId));
           // Wait a bit for the refresh to complete
           await Future.delayed(const Duration(milliseconds: 500));
         },
@@ -122,27 +122,7 @@ class _FlightStatusContent extends StatelessWidget {
     return DateFormat('MMM dd, yyyy • h:mm a').format(dateTime.toLocal());
   }
 
-  String _formatTime(DateTime? dateTime) {
-    if (dateTime == null) return '--:--';
-    return DateFormat('h:mm a').format(dateTime.toLocal());
-  }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'on time':
-        return Colors.green;
-      case 'delayed':
-        return Colors.orange;
-      case 'cancelled':
-        return Colors.red;
-      case 'boarding':
-        return Colors.blue;
-      case 'departed':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

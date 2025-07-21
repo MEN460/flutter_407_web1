@@ -70,7 +70,7 @@ class BookingTile extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Text(
-                              '${booking.flight!.origin ?? 'Unknown'} → ${booking.flight!.destination ?? 'Unknown'}',
+                              '${booking.flight!.origin} → ${booking.flight!.destination}',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurface.withOpacity(
                                   0.7,
@@ -198,11 +198,11 @@ class BookingDetailsSheet extends StatelessWidget {
                     _buildSection(context, 'Flight Information', [
                       _buildDetailRow(
                         'Flight Number',
-                        booking.flight!.number ?? 'N/A',
+                        booking.flight!.number,
                       ),
                       _buildDetailRow(
                         'Route',
-                        '${booking.flight!.origin ?? 'Unknown'} → ${booking.flight!.destination ?? 'Unknown'}',
+                        '${booking.flight!.origin} → ${booking.flight!.destination}',
                       ),
                       // Add more flight details as needed
                     ]),

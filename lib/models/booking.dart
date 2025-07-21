@@ -11,6 +11,9 @@ class Booking {
   final String status; // 'confirmed', 'pending', 'cancelled'
   final DateTime createdAt;
   final String seatClass;
+  final DateTime bookingDate; // ADD THIS
+  final bool checkedIn; // ADD THIS
+
 
   Booking({
     required this.id,
@@ -22,6 +25,8 @@ class Booking {
     required this.status,
     required this.createdAt,
     this.seatClass = 'economy', // Default to economy class
+    required this.bookingDate, // Initialize booking date
+    this.checkedIn = false, // Default to not checked in
   });
 
   /// Parse from API JSON
@@ -36,6 +41,8 @@ class Booking {
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       seatClass: json['seat_class'] as String? ?? 'economy',
+      bookingDate: DateTime.parse(json['booking_date'] as String), // Parse booking date
+      checkedIn: json['checked_in'] as bool? ?? false, // Parse checked-in
     );
   }
 
@@ -51,6 +58,8 @@ class Booking {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'seat_class': seatClass,
+      'booking_date': bookingDate.toIso8601String(), // Convert booking date to ISO string
+      'checked_in': checkedIn, // Include checked-in status
     };
   }
 }

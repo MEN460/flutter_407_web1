@@ -94,7 +94,7 @@ class _PassengerLookupScreenState extends ConsumerState<PassengerLookupScreen> {
 
       // Filter for passengers only
       final passengers = searchResults
-          .where((user) => user.role?.toLowerCase() == 'passenger')
+          .where((user) => user.role.toLowerCase() == 'passenger')
           .toList();
 
       if (mounted) {
@@ -530,7 +530,7 @@ class _PassengerListTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('ID: ${passenger.id}'),
-          if (passenger.name?.isNotEmpty == true)
+          if (passenger.name.isNotEmpty == true)
             Text('Name: ${passenger.name}'),
         ],
       ),
@@ -612,9 +612,9 @@ class _PassengerDetailsModal extends StatelessWidget {
                         children: [
                           _DetailRow('Email', passenger.email),
                           _DetailRow('ID', passenger.id.toString()),
-                          if (passenger.name?.isNotEmpty == true)
-                            _DetailRow('Name', passenger.name!),
-                          _DetailRow('Role', passenger.role ?? 'Unknown'),
+                          if (passenger.name.isNotEmpty == true)
+                            _DetailRow('Name', passenger.name),
+                          _DetailRow('Role', passenger.role),
                         ],
                       ),
                       const SizedBox(height: 16),

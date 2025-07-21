@@ -608,7 +608,7 @@ class _HelpCenterScreenState extends ConsumerState<HelpCenterScreen>
                           height: 60,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           ),
                           child: Icon(
                             Icons.play_circle_filled,

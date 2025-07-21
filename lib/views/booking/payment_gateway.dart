@@ -78,9 +78,12 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
     return prices[widget.booking.seatNumber] ?? 0.0;
   }
 
-  Future<void> _processPayment() async {
+Future<void> _processPayment() async {
+    if (!mounted) return; // Early return if widget is disposed
+
     setState(() => _isProcessing = true);
     final paymentService = ref.read(paymentServiceProvider);
+
     try {
       await paymentService.processPayment(
         amount: _calculateTotal(),
@@ -89,15 +92,21 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
         cvv: _cvvController.text,
         bookingId: widget.booking.id,
       );
-      if (mounted) {
-        context.push('/booking-confirm', extra: widget.booking);
-      }
+
+      if (!mounted) return; // Check again after async operation
+
+      // Use context safely
+      context.push('/booking-confirm', extra: widget.booking);
     } catch (e) {
+      if (!mounted) return; // Check before showing snackbar
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Payment failed: $e')));
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 }

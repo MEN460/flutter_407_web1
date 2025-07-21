@@ -17,9 +17,23 @@ import 'package:k_airways_flutter/views/employee/check_in.dart';
 import 'package:k_airways_flutter/views/employee/dashboard.dart';
 import 'package:k_airways_flutter/views/employee/flight_operations.dart';
 import 'package:k_airways_flutter/views/employee/passenger_lookup.dart';
+import 'package:k_airways_flutter/views/passenger/flight_search.dart';
 import 'package:k_airways_flutter/views/passenger/home_screen.dart';
+import 'package:k_airways_flutter/views/passenger/booking_inquiry.dart' hide BookingInquiryScreen;
+import 'package:k_airways_flutter/views/passenger/flight_search.dart';
+import 'package:k_airways_flutter/views/passenger/home_screen.dart';
+import 'package:k_airways_flutter/views/passenger/booking_confirm.dart';
+import 'package:k_airways_flutter/views/passenger/booking_history.dart';
+import 'package:k_airways_flutter/views/passenger/booking_screen.dart' hide BookingInquiryScreen;
+import 'package:k_airways_flutter/views/passenger/feedback.dart';
+import 'package:k_airways_flutter/views/passenger/flight_status.dart';
+import 'package:k_airways_flutter/views/passenger/seat_selection.dart';
 import 'package:k_airways_flutter/views/shared/error_fallback.dart';
 import 'package:k_airways_flutter/views/shared/unauthorized_screen.dart';
+import 'package:k_airways_flutter/views/shared/help_center.dart';
+import 'package:k_airways_flutter/views/shared/settings.dart';
+
+
 
 class AppRouter {
   static GoRouter createRouter(Ref ref) {
@@ -30,7 +44,7 @@ class AppRouter {
       routes: _buildRoutes(),
       redirect: (context, state) => _handleRedirect(ref, context, state),
       errorBuilder: (context, state) => ErrorFallbackScreen(
-        error: state.error?.toString() ?? 'Unknown error occurred',
+       errorMessage: state.error?.toString() ?? 'Unknown error occurred',
       ),
     );
   }
@@ -85,6 +99,12 @@ class AppRouter {
             name: 'admin-system-logs',
             builder: (context, state) => const SystemLogsScreen(),
           ),
+          GoRoute(
+            path: 'flight-operations',
+            name: 'admin-flight-operations',
+            builder: (context, state) => const FlightOperationsScreen(),
+          ),
+         
         ],
       ),
 
@@ -112,13 +132,13 @@ class AppRouter {
                 final flight = state.extra as Flight?;
                 if (flight == null) {
                   return const ErrorFallbackScreen(
-                    error: 'Flight data is required for this operation',
+                    errorMessage: 'Flight data is required for this operation',
                   );
                 }
                 return FlightOperationsScreen(flight: flight);
-              } catch (e) {
+              } catch (error) {
                 return ErrorFallbackScreen(
-                  error: 'Invalid flight data: ${e.toString()}',
+                  errorMessage: 'Invalid flight data: ${error.toString()}',
                 );
               }
             },
@@ -131,6 +151,40 @@ class AppRouter {
         ],
       ),
 
+      // 🛫 Passenger Routes - Always defined, access controlled via redirect
+      GoRoute(
+        path: 'booking-inquiry',
+        name: 'passenger-booking-inquiry',
+        builder: (context, state) => const BookingInquiryScreen(),
+      ),
+      GoRoute(
+        path: 'flight-status',
+        name: 'passenger-flight-status',
+        builder: (context, state) {
+          final flightId = state.extra as String?;
+          if (flightId == null) {
+            return const ErrorFallbackScreen(
+              errorMessage: 'Flight ID is required for this operation',
+            );
+          }
+          return FlightStatusScreen(flightId: flightId);
+        },
+      ),
+      GoRoute(
+        path: 'seat-selection',
+        name: 'passenger-seat-selection',
+        builder: (context, state) {
+          final flight = state.extra as Flight?;
+          if (flight == null) {
+            return const ErrorFallbackScreen(
+              errorMessage: 'Flight data is required for this operation',
+            );
+          }
+          return SeatSelectionScreen(flight: flight);
+        },
+      ),
+      
+
       // 🚫 Unauthorized access route
       GoRoute(
         path: '/unauthorized',
@@ -138,6 +192,7 @@ class AppRouter {
         builder: (context, state) => const UnauthorizedScreen(),
       ),
     ];
+    
   }
 
   static String? _handleRedirect(

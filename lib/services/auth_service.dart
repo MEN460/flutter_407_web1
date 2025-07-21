@@ -27,6 +27,10 @@ class AuthService {
         key: ApiEndpoints.userStorageKey,
         value: jsonEncode(userData),
       );
+      await _storage.write(
+        key: ApiEndpoints.refreshTokenStorageKey, // Add this constant
+        value: refreshToken,
+      );
     }
 
     return User.fromJson(userData);
@@ -44,6 +48,7 @@ class AuthService {
   /// Log out user and clear tokens
   Future<void> logout() async {
     await _storage.delete(key: ApiEndpoints.jwtStorageKey);
+    await _storage.delete(key: ApiEndpoints.refreshTokenStorageKey);
     await _storage.delete(key: ApiEndpoints.userStorageKey);
   }
 
@@ -78,7 +83,16 @@ class AuthService {
 
   /// Refresh JWT token if needed (optional, depends on Flask API support)
   Future<void> refreshToken() async {
-    final response = await _api.post(ApiEndpoints.refreshToken);
+   final refreshToken = await _storage.read(
+      key: ApiEndpoints.refreshTokenStorageKey,
+    );
+    if (refreshToken == null) return;
+
+    final response = await _api.post(
+      ApiEndpoints.refreshToken,
+      data: {'refresh_token': refreshToken},
+    );
+
     final newToken = response.data['access_token'];
     if (newToken != null) {
       await _storage.write(key: ApiEndpoints.jwtStorageKey, value: newToken);

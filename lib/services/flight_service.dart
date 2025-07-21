@@ -10,22 +10,42 @@ class FlightService {
 
   FlightService(this._api, this._logger);
 
-  /// ✅ Get all available flights
+  /// ✅ Get all available flights with improved error handling
   Future<List<Flight>> getFlights() async {
     try {
       final response = await _api.get(ApiEndpoints.flights);
       final data = response.data;
 
-      // ✅ Support both raw list and wrapped JSON { "flights": [...] }
-      final flightList = data is List ? data : data['flights'];
-      if (flightList == null) {
-        throw Exception('No flights data found in response');
+      // Enhanced response structure handling
+      List<dynamic>? flightsJson;
+
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('flights')) {
+          flightsJson = data['flights'] as List<dynamic>?;
+        } else if (data.containsKey('data')) {
+          final dataSection = data['data'];
+          if (dataSection is List) {
+            flightsJson = dataSection;
+          } else if (dataSection is Map && dataSection.containsKey('flights')) {
+            flightsJson = dataSection['flights'] as List<dynamic>?;
+          }
+        }
+      } else if (data is List) {
+        flightsJson = data;
       }
 
-      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
+      if (flightsJson == null || flightsJson.isEmpty) {
+        _logger.info('No flights data found in response', 'FlightService');
+        return []; // Return empty list instead of throwing
+      }
+
+      return flightsJson
+          .map((json) => Flight.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e, stack) {
       _logger.error('Failed to fetch flights: $e', stack);
-      rethrow;
+      // Return empty list for UI graceful handling instead of rethrowing
+      return [];
     }
   }
 
@@ -37,68 +57,113 @@ class FlightService {
       return FlightStatus.fromJson(response.data);
     } catch (e, stack) {
       _logger.error('Failed to fetch status for flight $flightId: $e', stack);
-      rethrow;
+      rethrow; // Keep original behavior for this method since provider expects non-null
     }
   }
 
   /// ✅ Update the status of a specific flight
-  Future<void> updateFlightStatus(String flightId, FlightStatus status) async {
+  Future<bool> updateFlightStatus(String flightId, FlightStatus status) async {
     try {
       await _api.post(
         ApiEndpoints.flightStatus(flightId),
         data: status.toJson(),
       );
       _logger.info('Updated status for flight $flightId', 'FlightService');
+      return true;
     } catch (e, stack) {
       _logger.error('Failed to update flight status: $e', stack);
-      rethrow;
+      return false; // Return false instead of rethrowing
     }
   }
 
-  /// ✅ Search flights with filters (e.g. origin, destination, date)
+  /// ✅ Search flights with filters with improved error handling
   Future<List<Flight>> searchFlights(Map<String, dynamic> filters) async {
     try {
       final response = await _api.get(ApiEndpoints.flights, params: filters);
       final data = response.data;
 
-      final flightList = data is List ? data : data['flights'];
-      if (flightList == null) {
-        throw Exception('No flights found for filters: $filters');
+      // Enhanced response structure handling (same as getFlights)
+      List<dynamic>? flightsJson;
+
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('flights')) {
+          flightsJson = data['flights'] as List<dynamic>?;
+        } else if (data.containsKey('data')) {
+          final dataSection = data['data'];
+          if (dataSection is List) {
+            flightsJson = dataSection;
+          } else if (dataSection is Map && dataSection.containsKey('flights')) {
+            flightsJson = dataSection['flights'] as List<dynamic>?;
+          }
+        }
+      } else if (data is List) {
+        flightsJson = data;
       }
 
-      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
+      if (flightsJson == null || flightsJson.isEmpty) {
+        _logger.info('No flights found for filters: $filters', 'FlightService');
+        return []; // Return empty list instead of throwing
+      }
+
+      return flightsJson
+          .map((json) => Flight.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e, stack) {
       _logger.error('Flight search failed: $e', stack);
-      rethrow;
+      return []; // Return empty list for graceful UI handling
     }
   }
 
-  /// ✅ Get flights assigned to an employee (for staff dashboard)
+  /// ✅ Get flights assigned to an employee with improved error handling
   Future<List<Flight>> getAssignedFlights(String employeeId) async {
     try {
       final response = await _api.get(ApiEndpoints.employeeFlights);
       final data = response.data;
 
-      final flightList = data is List ? data : data['flights'];
-      if (flightList == null) {
-        throw Exception('No assigned flights found for employee $employeeId');
+      // Enhanced response structure handling
+      List<dynamic>? flightsJson;
+
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('flights')) {
+          flightsJson = data['flights'] as List<dynamic>?;
+        } else if (data.containsKey('data')) {
+          final dataSection = data['data'];
+          if (dataSection is List) {
+            flightsJson = dataSection;
+          } else if (dataSection is Map && dataSection.containsKey('flights')) {
+            flightsJson = dataSection['flights'] as List<dynamic>?;
+          }
+        }
+      } else if (data is List) {
+        flightsJson = data;
       }
 
-      return (flightList as List).map((json) => Flight.fromJson(json)).toList();
+      if (flightsJson == null || flightsJson.isEmpty) {
+        _logger.info(
+          'No assigned flights found for employee $employeeId',
+          'FlightService',
+        );
+        return []; // Return empty list instead of throwing
+      }
+
+      return flightsJson
+          .map((json) => Flight.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e, stack) {
       _logger.error('Failed to fetch assigned flights: $e', stack);
-      rethrow;
+      return []; // Return empty list for graceful UI handling
     }
   }
 
-  /// ✅ Create a new flight (admin-only)
-  Future<void> createFlight(Flight flight) async {
+  /// ✅ Create a new flight (admin-only) with better error handling
+  Future<bool> createFlight(Flight flight) async {
     try {
       await _api.post(ApiEndpoints.flights, data: flight.toJson());
       _logger.info('Created new flight', 'FlightService');
+      return true;
     } catch (e, stack) {
       _logger.error('Failed to create flight: $e', stack);
-      rethrow;
+      return false; // Return false instead of rethrowing
     }
   }
 }
