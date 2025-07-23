@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:k_airways_flutter/l10n/app_localizations.dart';
 import 'package:k_airways_flutter/providers.dart';
 import 'package:k_airways_flutter/services/log_service.dart';
 import 'package:k_airways_flutter/utils/theme_provider.dart';
+import 'package:k_airways_flutter/utils/router_debugger.dart';
 import 'dart:developer' as developer;
 
 void main() async {
@@ -58,18 +60,24 @@ class KenyaAirwaysApp extends ConsumerWidget {
     final theme = ref.watch(themeProvider);
     final router = ref.watch(routerProvider);
 
-    return MaterialApp.router(
-      title: 'Kenya Airways',
-      theme: _buildLightTheme(),
-      darkTheme: _buildDarkTheme(),
-      themeMode: theme.themeMode,
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: _localizationsDelegates,
-      supportedLocales: _supportedLocales,
-      builder: (context, child) {
-        return ErrorBoundary(child: child ?? const SizedBox.shrink());
-      },
+    return ErrorBoundary(
+      child: MaterialApp.router(
+        title: 'Kenya Airways',
+        theme: _buildLightTheme(),
+        darkTheme: _buildDarkTheme(),
+        themeMode: theme.themeMode,
+        routerConfig: router,
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: _localizationsDelegates,
+        supportedLocales: _supportedLocales,
+        builder: (context, child) {
+          // Now the context here has access to GoRouter
+          return DebugOverlay(
+            router: router, // Pass router directly
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      ),
     );
   }
 
@@ -101,6 +109,217 @@ class KenyaAirwaysApp extends ConsumerWidget {
   static const List<Locale> _supportedLocales = [Locale('en'), Locale('sw')];
 }
 
+// Debug Overlay Widget - only shows in debug mode
+class DebugOverlay extends ConsumerStatefulWidget {
+  final Widget child;
+  final GoRouter router; // Accept router directly
+
+  const DebugOverlay({Key? key, required this.child, required this.router})
+    : super(key: key);
+
+  @override
+  ConsumerState<DebugOverlay> createState() => _DebugOverlayState();
+}
+
+class _DebugOverlayState extends ConsumerState<DebugOverlay> {
+  bool _showDebugInfo = false;
+  String _currentRoute = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (kDebugMode) {
+      _updateCurrentRoute();
+    }
+  }
+
+  void _updateCurrentRoute() {
+    try {
+      // Use the router passed as parameter instead of context
+      setState(() {
+        _currentRoute = widget.router.routeInformationProvider.value.uri
+            .toString();
+      });
+    } catch (e) {
+      setState(() {
+        _currentRoute = 'Unknown route';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!kDebugMode) return widget.child;
+
+    return Stack(
+      children: [
+        widget.child,
+
+        // Debug toggle button
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 10,
+          right: 10,
+          child: FloatingActionButton.small(
+            onPressed: () {
+              setState(() {
+                _showDebugInfo = !_showDebugInfo;
+                _updateCurrentRoute();
+              });
+            },
+            backgroundColor: Colors.red,
+            child: const Icon(Icons.bug_report, color: Colors.white),
+          ),
+        ),
+
+        // Debug info panel
+        if (_showDebugInfo)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 70,
+            right: 10,
+            child: Container(
+              width: 300,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '🐛 Debug Info',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Route: $_currentRoute',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Screen: ${MediaQuery.of(context).size.width.toInt()}x${MediaQuery.of(context).size.height.toInt()}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          try {
+                            widget.router.go('/debug');
+                          } catch (e) {
+                            appLogger.error(
+                              'Failed to navigate to debug route: $e',
+                              'DebugOverlay',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          minimumSize: const Size(80, 32),
+                        ),
+                        child: const Text(
+                          'Debug',
+                          style: TextStyle(fontSize: 10),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      ElevatedButton(
+                        onPressed: () {
+                          try {
+                            widget.router.go('/');
+                          } catch (e) {
+                            appLogger.error(
+                              'Failed to navigate to home route: $e',
+                              'DebugOverlay',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          minimumSize: const Size(60, 32),
+                        ),
+                        child: const Text(
+                          'Home',
+                          style: TextStyle(fontSize: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Debug utility buttons - now passing router directly
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      _buildDebugButton(
+                        'Routes',
+                        Colors.purple,
+                        () => RouterDebugger.debugAllRoutesInRouter(
+                          widget.router,
+                        ),
+                      ),
+                      _buildDebugButton(
+                        'Auth',
+                        Colors.orange,
+                        () => RouterDebugger.debugTestAuthStates(ref),
+                      ),
+                      _buildDebugButton(
+                        'Stack',
+                        Colors.teal,
+                        () => RouterDebugger.debugPrintNavigationStack(
+                          widget.router,
+                        ),
+                      ),
+                      _buildDebugButton(
+                        'Clear',
+                        Colors.red,
+                        () => RouterDebugger.debugClearNavigationHistory(
+                          widget.router,
+                        ),
+                      ),
+                      _buildDebugButton(
+                        'Quick',
+                        Colors.indigo,
+                        () => RouterDebugger.debugQuickInfo(widget.router, ref),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDebugButton(String label, Color color, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: () {
+        try {
+          onPressed();
+        } catch (e) {
+          appLogger.error('Debug button error ($label): $e', 'DebugOverlay');
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        minimumSize: const Size(50, 28),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 9, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// Error Boundary Widget
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
 
@@ -277,3 +496,4 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     );
   }
 }
+    
